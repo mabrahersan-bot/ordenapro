@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#d50047" />
+    <title>Dindu Negocio</title>
+    <link rel="manifest" href="../../manifest-merchant.webmanifest" />
+    <link rel="apple-touch-icon" href="../../assets/dindu-logo.png" />
+    <link rel="stylesheet" href="../../styles.css" />
+    <link rel="stylesheet" href="../app.css" />
+  </head>
+  <body>
+    <main class="app-main">
+      <header class="app-header">
+        <div>
+          <div class="app-brand-line"><img src="../../assets/dindu-logo.png" alt="Dindu" /><span>Dindu</span></div>
+          <p class="eyebrow">Dindu negocio</p>
+          <h1>Pedidos y menu del negocio</h1>
+          <div class="status-chip" id="backendStatus">Modo demo</div>
+          <div class="status-chip live-chip">En vivo cada 4s</div>
+        </div>
+        <nav class="app-links">
+          <a href="../buyer/index.html">Comprador</a>
+          <a class="active" href="./index.html">Negocio</a>
+          <a href="../courier/index.html">Repartidor</a>
+          <a href="../admin/index.html">Admin</a>
+        </nav>
+      </header>
+
+      <section class="pwa-actions" aria-label="Instalacion y avisos">
+        <button class="secondary-button" data-install-app type="button">Instalar app</button>
+        <button class="secondary-button" data-enable-notifications type="button">Activar avisos</button>
+        <span data-pwa-status>Preparando instalacion...</span>
+      </section>
+
+      <section class="panel auth-panel">
+        <div>
+          <p class="eyebrow">Acceso negocio</p>
+          <h2 id="merchantSession">Verifica tu telefono</h2>
+        </div>
+        <div class="auth-grid">
+          <input id="authName" type="text" placeholder="Nombre del negocio" value="Cocina Central" />
+          <input id="authPhone" type="tel" placeholder="Telefono" value="5550102026" />
+          <button class="primary-button" id="sendCode" type="button">Enviar codigo</button>
+          <input id="authCode" type="text" placeholder="Codigo" />
+          <button class="secondary-button" id="verifyCode" type="button">Verificar</button>
+          <span id="authHint">Codigo demo visible aqui.</span>
+        </div>
+      </section>
+
+      <section class="merchant-layout">
+        <article class="panel wide">
+          <h3>Pedidos recibidos</h3>
+          <div id="merchantOrders" class="order-list"></div>
+        </article>
+
+        <article class="panel">
+          <h3>Datos del negocio</h3>
+          <form class="product-form" id="businessForm">
+            <label>Nombre del negocio<input id="businessName" type="text" /></label>
+            <label>Direccion de recoleccion<input id="pickupAddress" type="text" /></label>
+            <label>Telefono<input id="businessPhone" type="text" /></label>
+            <label class="inline-check"><input id="businessOpen" type="checkbox" />Abierto para recibir pedidos</label>
+            <button class="secondary-button" type="submit">Guardar datos</button>
+          </form>
+        </article>
+
+        <article class="panel">
+          <h3>Agregar producto</h3>
+          <form class="product-form" id="productForm">
+            <label>Foto del producto<input id="productPhoto" type="file" accept="image/*" /></label>
+            <div class="photo-preview" id="photoPreview">Foto</div>
+            <label>Nombre<input id="productName" type="text" placeholder="Ej. Torta cubana" required /></label>
+            <label>Descripcion<input id="productDescription" type="text" placeholder="Ingredientes principales" required /></label>
+            <label>Precio base<input id="productPrice" type="number" min="1" step="1" placeholder="85" required /></label>
+            <label>Extras<input id="productExtras" type="text" placeholder="Queso +15, Aguacate +20" /></label>
+            <label class="inline-check"><input id="productAvailable" type="checkbox" checked />Disponible para compradores</label>
+            <button class="primary-button" type="submit">Publicar producto</button>
+          </form>
+        </article>
+
+        <article class="panel">
+          <h3>Productos publicados</h3>
+          <div id="merchantMenu" class="compact-list"></div>
+        </article>
+      </section>
+    </main>
+
+    <script src="../config.js"></script>
+    <script src="../shared.js"></script>
+    <script src="../pwa.js?v=2"></script>
+    <script src="./merchant.js"></script>
+  </body>
+</html>
