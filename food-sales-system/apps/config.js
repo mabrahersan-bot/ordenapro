@@ -1,3 +1,3 @@
 window.ORDENAPRO_CONFIG = {
-  apiBase: ""
+  apiBase: "https://ordenapro-api.onrender.com"
 };
