@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ordenapro-api
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "python backend/server.py"
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+
+  - type: static
+    name: ordenapro-apps
+    buildCommand: ""
+    staticPublishPath: .
