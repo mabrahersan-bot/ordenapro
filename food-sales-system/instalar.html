@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#207a5a" />
+    <title>Instalar OrdenaPro</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./apps/app.css" />
+  </head>
+  <body>
+    <main class="app-main install-main">
+      <section class="hero">
+        <img src="./assets/operations-hero.png" alt="OrdenaPro para pedidos locales" />
+        <div class="hero-copy">
+          <p>Abre la app que necesitas en Safari y usa Compartir > Agregar a pantalla de inicio.</p>
+          <div class="hero-metrics">
+            <span><strong>Comprador</strong> pedidos y GPS</span>
+            <span><strong>Negocio</strong> productos y ventas</span>
+            <span><strong>Repartidor</strong> entregas y ubicacion</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="pwa-actions" aria-label="Instalacion">
+        <button class="secondary-button" data-install-app type="button">Instalar app</button>
+        <button class="secondary-button" data-enable-notifications type="button">Activar avisos</button>
+        <span data-pwa-status>Preparando instalacion...</span>
+      </section>
+
+      <section class="launcher-grid">
+        <a class="launcher-card" href="./apps/buyer/index.html">
+          <strong>Instalar Comprador</strong>
+          <span>Para clientes que piden comida o productos.</span>
+        </a>
+        <a class="launcher-card" href="./apps/merchant/index.html">
+          <strong>Instalar Negocio</strong>
+          <span>Para restaurantes, tiendas y comercios locales.</span>
+        </a>
+        <a class="launcher-card" href="./apps/courier/index.html">
+          <strong>Instalar Repartidor</strong>
+          <span>Para tomar entregas y compartir GPS.</span>
+        </a>
+        <a class="launcher-card" href="./apps/admin/index.html">
+          <strong>Instalar Admin</strong>
+          <span>Para controlar pedidos, tarifas e incidencias.</span>
+        </a>
+      </section>
+    </main>
+    <script src="./apps/pwa.js?v=2"></script>
+  </body>
+</html>

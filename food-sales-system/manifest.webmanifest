@@ -1,0 +1,37 @@
+{
+  "name": "OrdenaPro",
+  "short_name": "OrdenaPro",
+  "description": "Pedidos, ventas y reparto local para comunidades.",
+  "start_url": "./apps/index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef3f4",
+  "theme_color": "#207a5a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Comprador",
+      "url": "./apps/buyer/index.html"
+    },
+    {
+      "name": "Negocio",
+      "url": "./apps/merchant/index.html"
+    },
+    {
+      "name": "Repartidor",
+      "url": "./apps/courier/index.html"
+    },
+    {
+      "name": "Admin",
+      "url": "./apps/admin/index.html"
+    }
+  ]
+}

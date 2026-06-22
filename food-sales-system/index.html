@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OrdenaPro | Sistema de pedidos y ventas</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navegacion principal">
+        <div class="brand">
+          <div class="brand-mark">OP</div>
+          <div>
+            <strong>OrdenaPro</strong>
+            <span>Pedidos, ventas y reparto</span>
+          </div>
+        </div>
+
+        <nav class="role-nav" aria-label="Aplicaciones">
+          <button class="nav-item active" data-view="buyer">
+            <span class="icon">B</span>
+            Compradores
+          </button>
+          <button class="nav-item" data-view="merchant">
+            <span class="icon">N</span>
+            Negocio
+          </button>
+          <button class="nav-item" data-view="courier">
+            <span class="icon">R</span>
+            Repartidores
+          </button>
+          <button class="nav-item" data-view="admin">
+            <span class="icon">A</span>
+            Administrador
+          </button>
+        </nav>
+
+        <div class="sidebar-card">
+          <span>Operacion activa</span>
+          <strong id="liveOrdersCount">0 pedidos</strong>
+          <small>Actualizado en esta sesion</small>
+        </div>
+      </aside>
+
+      <main>
+        <section class="topbar">
+          <div>
+            <p class="eyebrow">Sistema multi app</p>
+            <h1 id="viewTitle">App para compradores</h1>
+          </div>
+          <div class="top-actions">
+            <button class="ghost-button" id="resetDemo" type="button">Reiniciar demo</button>
+          </div>
+        </section>
+
+        <section class="hero">
+          <img src="./assets/operations-hero.png" alt="Pedidos listos para entrega en un negocio de comida" />
+          <div class="hero-copy">
+            <p>Comercio local con cobertura de 10 km, rastreo GPS y reparto para comunidades sin apps grandes.</p>
+            <div class="hero-metrics">
+              <span><strong id="metricRevenue">$0</strong> ventas</span>
+              <span><strong id="metricActive">0</strong> activos</span>
+              <span><strong id="metricCouriers">0</strong> repartidores</span>
+              <span><strong>10 km</strong> cobertura</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="view active" id="buyerView">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Comprar</p>
+              <h2>Catalogo del negocio</h2>
+            </div>
+            <div class="cart-pill">
+              <span id="cartCount">0 productos</span>
+              <strong id="cartTotal">$0</strong>
+            </div>
+          </div>
+
+          <div class="buyer-layout">
+            <div class="menu-grid" id="menuGrid"></div>
+            <aside class="checkout-panel">
+              <h3>Tu pedido</h3>
+              <div id="cartItems" class="cart-items empty-state">Agrega productos para iniciar.</div>
+              <label>
+                Nombre del cliente
+                <input id="customerName" type="text" value="Cliente mostrador" />
+              </label>
+              <label>
+                Direccion o mesa
+                <input id="customerAddress" type="text" value="Av. Central 120" />
+              </label>
+              <label>
+                Distancia al negocio
+                <input id="customerDistance" type="range" min="1" max="12" step="0.5" value="4.5" />
+              </label>
+              <div class="coverage-box" id="coverageBox">
+                <span>Cobertura local: <strong id="distanceLabel">4.5 km</strong></span>
+                <small id="coverageLabel">Dentro del radio de reparto.</small>
+              </div>
+              <button class="primary-button" id="placeOrder" type="button">Confirmar pedido</button>
+            </aside>
+          </div>
+
+          <article class="panel tracking-panel">
+            <div class="section-heading compact-heading">
+              <div>
+                <p class="eyebrow">Seguimiento GPS</p>
+                <h2>Pedido en camino</h2>
+              </div>
+              <div class="status-chip" id="buyerTrackingStatus">Sin pedido activo</div>
+            </div>
+            <div class="tracking-layout">
+              <div class="local-map" id="buyerMap" aria-label="Mapa de seguimiento del comprador">
+                <div class="coverage-ring"></div>
+                <div class="map-road road-a"></div>
+                <div class="map-road road-b"></div>
+                <div class="map-pin store-pin">Negocio</div>
+                <div class="map-pin courier-pin" id="buyerCourierPin">Repartidor</div>
+                <div class="map-pin home-pin" id="buyerHomePin">Tu ubicacion</div>
+              </div>
+              <div class="tracking-copy" id="buyerTrackingCopy">
+                <strong>Cuando tu pedido sea tomado por un repartidor veras aqui su avance.</strong>
+                <span>El prototipo simula GPS dentro de un radio de 10 km.</span>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="view" id="merchantView">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Negocio</p>
+              <h2>Pedidos y menu</h2>
+            </div>
+            <div class="status-chip">Menu editable</div>
+          </div>
+
+          <div class="merchant-layout">
+            <article class="panel wide">
+              <h3>Pedidos recibidos</h3>
+              <div id="merchantOrders" class="order-list"></div>
+            </article>
+            <article class="panel">
+              <h3>Agregar producto</h3>
+              <form class="product-form" id="productForm">
+                <label>
+                  Foto del producto
+                  <input id="productPhoto" type="file" accept="image/*" />
+                </label>
+                <div class="photo-preview" id="photoPreview">Foto</div>
+                <label>
+                  Nombre
+                  <input id="productName" type="text" placeholder="Ej. Torta cubana" required />
+                </label>
+                <label>
+                  Descripcion
+                  <input id="productDescription" type="text" placeholder="Ingredientes principales" required />
+                </label>
+                <label>
+                  Precio base
+                  <input id="productPrice" type="number" min="1" step="1" placeholder="85" required />
+                </label>
+                <label>
+                  Extras
+                  <input id="productExtras" type="text" placeholder="Queso +15, Aguacate +20, Sin cebolla +0" />
+                </label>
+                <label class="inline-check">
+                  <input id="productAvailable" type="checkbox" checked />
+                  Disponible para compradores
+                </label>
+                <button class="primary-button" type="submit">Publicar producto</button>
+              </form>
+            </article>
+            <article class="panel">
+              <h3>Productos publicados</h3>
+              <div id="merchantMenu" class="compact-list"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="courierView">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Reparto</p>
+              <h2>Entregas disponibles</h2>
+            </div>
+            <div class="status-chip">Turno abierto</div>
+          </div>
+
+          <div class="ops-grid">
+            <article class="panel wide">
+              <h3>Asignaciones</h3>
+              <div id="courierOrders" class="order-list"></div>
+            </article>
+            <article class="panel">
+              <h3>Resumen del repartidor</h3>
+              <div class="stat-stack">
+                <span><strong id="courierTaken">0</strong> tomadas</span>
+                <span><strong id="courierDelivered">0</strong> entregadas</span>
+                <span><strong id="courierEarnings">$0</strong> comision</span>
+                <span><strong id="courierDistance">0 km</strong> por recorrer</span>
+              </div>
+            </article>
+            <article class="panel">
+              <h3>GPS del repartidor</h3>
+              <div class="local-map small-map" id="courierMap" aria-label="Mapa GPS del repartidor">
+                <div class="coverage-ring"></div>
+                <div class="map-road road-a"></div>
+                <div class="map-road road-b"></div>
+                <div class="map-pin store-pin">Negocio</div>
+                <div class="map-pin courier-pin" id="courierPin">Tu GPS</div>
+                <div class="map-pin home-pin" id="courierHomePin">Cliente</div>
+              </div>
+              <button class="secondary-button full-button" id="advanceGps" type="button">Avanzar GPS</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="adminView">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Administrador</p>
+              <h2>Operacion completa</h2>
+            </div>
+            <div class="status-chip">Vista global</div>
+          </div>
+
+          <div class="admin-kpis">
+            <article><span>Ventas totales</span><strong id="adminRevenue">$0</strong></article>
+            <article><span>Pedidos</span><strong id="adminOrders">0</strong></article>
+            <article><span>Ticket promedio</span><strong id="adminAverage">$0</strong></article>
+            <article><span>Pendientes</span><strong id="adminPending">0</strong></article>
+            <article><span>Radio de cobertura</span><strong>10 km</strong></article>
+          </div>
+
+          <article class="panel">
+            <h3>Registro de operaciones</h3>
+            <div id="adminTimeline" class="timeline"></div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

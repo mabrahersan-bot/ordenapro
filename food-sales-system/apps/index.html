@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#207a5a" />
+    <title>OrdenaPro | Apps separadas</title>
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="./app.css" />
+  </head>
+  <body>
+    <main class="app-main">
+      <section class="hero">
+        <img src="../assets/operations-hero.png" alt="Pedidos locales listos para entrega" />
+        <div class="hero-copy">
+          <p>OrdenaPro dividido en apps separadas para comprador, negocio, repartidor y administrador.</p>
+          <div class="hero-metrics">
+            <span><strong>10 km</strong> cobertura local</span>
+            <span><strong>4 apps</strong> conectadas</span>
+            <span><strong>1 panel</strong> de control</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="pwa-actions" aria-label="Instalacion y avisos">
+        <button class="secondary-button" data-install-app type="button">Instalar app</button>
+        <button class="secondary-button" data-enable-notifications type="button">Activar avisos</button>
+        <a class="secondary-button" href="../instalar.html">Guia iPhone</a>
+        <span data-pwa-status>Preparando instalacion...</span>
+      </section>
+
+      <section class="launcher-grid">
+        <a class="launcher-card" href="./buyer/index.html">
+          <strong>Comprador</strong>
+          <span>Catalogo, extras, carrito, direccion, cobertura y seguimiento GPS.</span>
+        </a>
+        <a class="launcher-card" href="./merchant/index.html">
+          <strong>Negocio</strong>
+          <span>Pedidos entrantes, menu editable, fotos, precios, extras y disponibilidad.</span>
+        </a>
+        <a class="launcher-card" href="./courier/index.html">
+          <strong>Repartidor</strong>
+          <span>Entregas disponibles, GPS, avance de ruta, ganancias e historial.</span>
+        </a>
+        <a class="launcher-card" href="./admin/index.html">
+          <strong>Administrador</strong>
+          <span>Control global de pedidos, comercios, repartidores, incidencias y ajustes.</span>
+        </a>
+      </section>
+    </main>
+    <script src="./pwa.js?v=2"></script>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "OrdenaPro Admin",
+  "short_name": "Admin",
+  "description": "Panel de control para pedidos, tarifas, comercios e incidencias.",
+  "start_url": "./apps/admin/index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef3f4",
+  "theme_color": "#207a5a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
