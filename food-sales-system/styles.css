@@ -924,6 +924,121 @@ main {
   font-weight: 800;
 }
 
+.admin-command {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.admin-command article,
+.admin-cash-board article,
+.admin-summary-card {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(35, 45, 55, 0.05);
+}
+
+.admin-command span,
+.admin-cash-board span,
+.admin-summary-card span,
+.admin-summary-grid span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.admin-command strong,
+.admin-cash-board strong,
+.admin-summary-card strong,
+.admin-summary-grid strong {
+  color: var(--green-dark);
+}
+
+.admin-cash-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.admin-alerts {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.admin-alert {
+  border: 1px solid rgba(213, 0, 71, 0.24);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff0f5;
+  color: var(--green-dark);
+  font-weight: 850;
+}
+
+.admin-alert.ok {
+  border-color: #d8eadf;
+  background: #f3fbf6;
+  color: var(--green);
+}
+
+.admin-alert.important {
+  border-color: rgba(213, 0, 71, 0.4);
+  background: #fff0f5;
+}
+
+.admin-order {
+  margin-top: 10px;
+}
+
+.admin-order.pending,
+.admin-order.ready {
+  border-color: rgba(213, 0, 71, 0.32);
+  box-shadow: 0 10px 26px rgba(213, 0, 71, 0.07);
+}
+
+.admin-cash-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.admin-cash-line span {
+  border: 1px dashed rgba(213, 0, 71, 0.3);
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: #fff;
+  color: var(--green-dark);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.admin-ops-summary {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.admin-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.admin-summary-grid span {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff;
+}
+
 .order-board {
   display: grid;
   grid-template-columns: repeat(4, minmax(220px, 1fr));
@@ -1225,7 +1340,9 @@ main {
 
 @media (max-width: 1120px) {
   .menu-grid,
-  .admin-kpis {
+  .admin-kpis,
+  .admin-command,
+  .admin-cash-board {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1277,6 +1394,8 @@ main {
 
   .menu-grid,
   .admin-kpis,
+  .admin-command,
+  .admin-cash-board,
   .merchant-kpis,
   .courier-kpis,
   .order-board {
