@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#d50047" />
+    <title>Dindu Repartidor</title>
+    <link rel="manifest" href="../../manifest-courier.webmanifest" />
+    <link rel="apple-touch-icon" href="../../assets/dindu-logo.png" />
+    <link rel="stylesheet" href="../../styles.css" />
+    <link rel="stylesheet" href="../app.css" />
+  </head>
+  <body>
+    <main class="app-main">
+      <header class="app-header">
+        <div>
+          <div class="app-brand-line"><img src="../../assets/dindu-logo.png" alt="Dindu" /><span>Dindu</span></div>
+          <p class="eyebrow">Dindu repartidor</p>
+          <h1>Turno, entregas y GPS</h1>
+          <div class="status-chip" id="backendStatus">Modo demo</div>
+          <div class="status-chip live-chip">En vivo cada 4s</div>
+        </div>
+      </header>
+
+      <section class="pwa-actions role-app-note" aria-label="Instalacion y avisos">
+        <span>Para instalar en iPhone: Safari > Compartir > Agregar a pantalla de inicio.</span>
+        <button class="secondary-button" data-enable-notifications type="button">Activar avisos</button>
+        <span data-pwa-status>Preparando instalacion...</span>
+      </section>
+
+      <section class="panel auth-panel">
+        <div>
+          <p class="eyebrow">Acceso repartidor</p>
+          <h2 id="courierSession">Verifica tu telefono</h2>
+        </div>
+        <div class="auth-grid">
+          <input id="authName" type="text" placeholder="Nombre" value="Repartidor Demo" />
+          <input id="authPhone" type="tel" placeholder="Telefono" value="5553334444" />
+          <button class="primary-button" id="sendCode" type="button">Enviar codigo</button>
+          <input id="authCode" type="text" placeholder="Codigo" />
+          <button class="secondary-button" id="verifyCode" type="button">Verificar</button>
+          <span id="authHint">Codigo demo visible aqui.</span>
+        </div>
+      </section>
+
+      <section class="ops-grid">
+        <article class="panel wide">
+          <h3>Asignaciones</h3>
+          <div id="courierOrders" class="order-list"></div>
+        </article>
+        <article class="panel">
+          <h3>Resumen del repartidor</h3>
+          <div class="stat-stack">
+            <span><strong id="courierTaken">0</strong> tomadas</span>
+            <span><strong id="courierDelivered">0</strong> entregadas</span>
+            <span><strong id="courierEarnings">$0</strong> comision</span>
+            <span><strong id="courierDistance">0 km</strong> por recorrer</span>
+          </div>
+        </article>
+        <article class="panel">
+          <h3>GPS del repartidor</h3>
+          <div class="local-map small-map" aria-label="Mapa GPS del repartidor">
+            <div class="coverage-ring"></div>
+            <div class="map-road road-a"></div>
+            <div class="map-road road-b"></div>
+            <div class="map-pin store-pin">Negocio</div>
+            <div class="map-pin courier-pin" id="courierCourierPin">Tu GPS</div>
+            <div class="map-pin home-pin" id="courierHomePin">Cliente</div>
+          </div>
+          <div class="gps-status" id="gpsStatus">GPS real apagado.</div>
+          <div class="gps-actions">
+            <button class="primary-button" id="startRealGps" type="button">Activar GPS real</button>
+            <button class="secondary-button" id="stopRealGps" type="button">Detener GPS</button>
+          </div>
+          <button class="secondary-button full-button" id="advanceGps" type="button">Avanzar GPS</button>
+        </article>
+      </section>
+    </main>
+
+    <script src="../config.js"></script>
+    <script src="../shared.js"></script>
+    <script src="../pwa.js?v=2"></script>
+    <script src="./courier.js"></script>
+  </body>
+</html>

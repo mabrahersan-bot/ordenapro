@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#d50047" />
+    <title>Dindu Comprador</title>
+    <link rel="manifest" href="../../manifest-buyer.webmanifest" />
+    <link rel="apple-touch-icon" href="../../assets/dindu-logo.png" />
+    <link rel="stylesheet" href="../../styles.css" />
+    <link rel="stylesheet" href="../app.css" />
+  </head>
+  <body>
+    <main class="app-main buyer-app">
+      <header class="app-header">
+        <div>
+          <div class="app-brand-line"><img src="../../assets/dindu-logo.png" alt="Dindu" /><span>Dindu</span></div>
+          <p class="eyebrow">Dindu comprador</p>
+          <h1 id="buyerGreeting">Comprar en negocios locales</h1>
+          <div class="status-chip" id="backendStatus">Modo demo</div>
+          <div class="status-chip live-chip">En vivo cada 4s</div>
+        </div>
+      </header>
+
+      <section class="pwa-actions role-app-note" aria-label="Instalacion y avisos">
+        <span>Para instalar en iPhone: Safari > Compartir > Agregar a pantalla de inicio.</span>
+        <button class="secondary-button" data-enable-notifications type="button">Activar avisos</button>
+        <span data-pwa-status>Preparando instalacion...</span>
+      </section>
+
+      <section class="buyer-steps" aria-label="Pasos para pedir">
+        <div class="buyer-step active">
+          <strong>1</strong>
+          <span>Elige productos</span>
+        </div>
+        <div class="buyer-step">
+          <strong>2</strong>
+          <span>Confirma direccion</span>
+        </div>
+        <div class="buyer-step">
+          <strong>3</strong>
+          <span>Paga en efectivo</span>
+        </div>
+      </section>
+
+      <section class="buyer-home">
+        <article class="panel session-panel">
+          <div>
+            <p class="eyebrow">Sesion</p>
+            <h2 id="sessionTitle">Inicia sesion</h2>
+          </div>
+          <div class="session-grid">
+            <label>
+              Nombre
+              <input id="loginName" type="text" placeholder="Tu nombre" />
+            </label>
+            <label>
+              Telefono
+              <input id="loginPhone" type="tel" placeholder="10 digitos" />
+            </label>
+            <button class="primary-button" id="loginButton" type="button">Enviar codigo</button>
+            <label>
+              Codigo
+              <input id="loginCode" type="text" placeholder="6 digitos" />
+            </label>
+            <button class="secondary-button" id="verifyButton" type="button">Verificar e iniciar</button>
+            <div class="auth-hint" id="loginHint">En demo, el codigo aparecera aqui.</div>
+          </div>
+        </article>
+
+        <article class="panel address-panel">
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">Entrega</p>
+              <h2>Mis direcciones</h2>
+            </div>
+            <div class="status-chip" id="addressCount">1 guardada</div>
+          </div>
+          <div class="address-grid">
+            <label>
+              Direccion guardada
+              <select id="savedAddress"></select>
+            </label>
+            <label>
+              Nombre de direccion
+              <input id="addressLabel" type="text" placeholder="Casa, trabajo, local" />
+            </label>
+            <label>
+              Nueva direccion
+              <input id="newAddress" type="text" placeholder="Calle, numero, colonia" autocomplete="street-address" />
+            </label>
+            <label>
+              Referencias
+              <input id="addressReference" type="text" placeholder="Color de casa, entre calles, indicaciones" />
+            </label>
+            <button class="secondary-button" id="saveAddress" type="button">Guardar direccion</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="buyer-layout">
+        <div>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Catalogo</p>
+              <h2>Productos disponibles</h2>
+            </div>
+            <div class="cart-pill"><span id="cartCount">0 productos</span><strong id="cartTotal">$0</strong></div>
+          </div>
+          <div class="menu-grid" id="menuGrid"></div>
+        </div>
+
+        <aside class="checkout-panel">
+          <div class="checkout-title">
+            <div>
+              <p class="eyebrow">Efectivo al recibir</p>
+              <h3>Tu pedido</h3>
+            </div>
+            <strong id="cashDueTop">$0</strong>
+          </div>
+          <div id="cartItems" class="cart-items empty-state">Agrega productos para iniciar.</div>
+          <label>
+            Nombre del cliente
+            <input id="customerName" type="text" value="Cliente mostrador" autocomplete="name" required />
+          </label>
+          <label>
+            Direccion de entrega
+            <input id="customerAddress" type="text" value="Av. Central 120, Col. Centro" autocomplete="street-address" required />
+          </label>
+          <div class="coverage-box neutral">
+            <span>Recoge en: <strong id="pickupPreview">Negocio local</strong></span>
+            <small>Esta direccion la administra el negocio.</small>
+          </div>
+          <label>
+            Distancia al negocio
+            <input id="customerDistance" type="range" min="1" max="12" step="0.5" value="4.5" />
+          </label>
+          <div class="coverage-box" id="coverageBox">
+            <span>Cobertura local: <strong id="distanceLabel">4.5 km</strong></span>
+            <small id="coverageLabel">Dentro del radio de reparto.</small>
+          </div>
+          <label>
+            Metodo de pago
+            <select id="paymentMethod">
+              <option>Pago en efectivo al recibir</option>
+            </select>
+          </label>
+          <label>
+            Nota para negocio/repartidor
+            <input id="customerNote" type="text" placeholder="Ej. Casa verde, tocar porton" />
+          </label>
+          <div class="checkout-summary" id="checkoutSummary"></div>
+          <div class="checkout-warning" id="checkoutWarning"></div>
+          <div class="cash-callout" id="cashCallout">Prepara efectivo para pagar al recibir.</div>
+          <button class="primary-button" id="placeOrder" type="button">Confirmar pedido</button>
+        </aside>
+      </section>
+
+      <article class="panel tracking-panel">
+        <div class="section-heading compact-heading">
+          <div>
+            <p class="eyebrow">Seguimiento GPS</p>
+            <h2>Pedido en camino</h2>
+          </div>
+          <div class="status-chip" id="trackingStatus">Sin pedido activo</div>
+        </div>
+        <div class="tracking-layout">
+          <div class="local-map" aria-label="Mapa de seguimiento del comprador">
+            <div class="coverage-ring"></div>
+            <div class="map-road road-a"></div>
+            <div class="map-road road-b"></div>
+            <div class="map-pin store-pin">Negocio</div>
+            <div class="map-pin courier-pin" id="buyerCourierPin">Repartidor</div>
+            <div class="map-pin home-pin" id="buyerHomePin">Tu ubicacion</div>
+          </div>
+          <div class="tracking-copy" id="trackingCopy"></div>
+        </div>
+      </article>
+
+      <article class="panel tracking-panel">
+        <h3>Historial y soporte</h3>
+        <div id="buyerHistory" class="order-list"></div>
+      </article>
+    </main>
+
+    <script src="../config.js"></script>
+    <script src="../shared.js"></script>
+    <script src="../pwa.js?v=2"></script>
+    <script src="./buyer.js"></script>
+  </body>
+</html>

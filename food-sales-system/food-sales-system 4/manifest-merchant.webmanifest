@@ -1,0 +1,19 @@
+{
+  "name": "Dindu Negocio",
+  "short_name": "Negocio",
+  "description": "Pedidos, productos, fotos, precios, extras y disponibilidad.",
+  "start_url": "./apps/merchant/index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff4f8",
+  "theme_color": "#d50047",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./assets/dindu-logo.png",
+      "sizes": "1600x1600",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
