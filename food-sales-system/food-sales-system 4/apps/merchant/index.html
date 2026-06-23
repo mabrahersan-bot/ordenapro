@@ -45,16 +45,24 @@
 
       <section class="merchant-layout">
         <article class="panel wide">
-          <h3>Pedidos recibidos</h3>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">Operacion</p>
+              <h3>Pedidos recibidos</h3>
+            </div>
+            <div class="status-chip" id="merchantOpenStatus">Abierto</div>
+          </div>
+          <div class="merchant-kpis" id="merchantKpis"></div>
+          <div class="merchant-notice" id="merchantNotice"></div>
           <div id="merchantOrders" class="order-list"></div>
         </article>
 
         <article class="panel">
           <h3>Datos del negocio</h3>
           <form class="product-form" id="businessForm">
-            <label>Nombre del negocio<input id="businessName" type="text" /></label>
-            <label>Direccion de recoleccion<input id="pickupAddress" type="text" /></label>
-            <label>Telefono<input id="businessPhone" type="text" /></label>
+            <label>Nombre del negocio<input id="businessName" type="text" required /></label>
+            <label>Direccion de recoleccion<input id="pickupAddress" type="text" required /></label>
+            <label>Telefono<input id="businessPhone" type="text" required /></label>
             <label class="inline-check"><input id="businessOpen" type="checkbox" />Abierto para recibir pedidos</label>
             <button class="secondary-button" type="submit">Guardar datos</button>
           </form>
@@ -68,7 +76,8 @@
             <label>Nombre<input id="productName" type="text" placeholder="Ej. Torta cubana" required /></label>
             <label>Descripcion<input id="productDescription" type="text" placeholder="Ingredientes principales" required /></label>
             <label>Precio base<input id="productPrice" type="number" min="1" step="1" placeholder="85" required /></label>
-            <label>Extras<input id="productExtras" type="text" placeholder="Queso +15, Aguacate +20" /></label>
+            <label>Extras<input id="productExtras" type="text" placeholder="Ej. Queso +15, Aguacate +20" /></label>
+            <div class="form-hint">Escribe cada extra separado por coma: Queso +15, Salsa +10.</div>
             <label class="inline-check"><input id="productAvailable" type="checkbox" checked />Disponible para compradores</label>
             <button class="primary-button" type="submit">Publicar producto</button>
           </form>
