@@ -744,6 +744,139 @@ main {
   color: #475467;
 }
 
+.badge.canceled,
+.badge.assigned {
+  background: #fff0f0;
+  color: var(--red);
+}
+
+.status-chip.closed {
+  background: #fff0f0;
+  color: var(--red);
+  border-color: #f2c5c5;
+}
+
+.merchant-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.merchant-kpis span {
+  display: grid;
+  gap: 4px;
+  min-height: 74px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.merchant-kpis strong {
+  color: var(--green-dark);
+  font-size: 1.2rem;
+}
+
+.merchant-notice {
+  display: none;
+  margin: 12px 0;
+  border: 1px solid rgba(213, 0, 71, 0.25);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff0f5;
+  color: var(--green-dark);
+  font-weight: 850;
+}
+
+.merchant-notice.visible {
+  display: block;
+}
+
+.order-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.order-column {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #f8fafc;
+}
+
+.order-column.pending {
+  background: #fff8e8;
+}
+
+.order-column.preparing {
+  background: #f4f8ff;
+}
+
+.order-column.ready {
+  background: #fff4f8;
+}
+
+.order-column-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.order-column-title span {
+  display: grid;
+  min-width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--green-dark);
+}
+
+.merchant-order.pending {
+  border-color: rgba(213, 0, 71, 0.35);
+  box-shadow: 0 10px 26px rgba(213, 0, 71, 0.08);
+}
+
+.cash-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px dashed rgba(213, 0, 71, 0.35);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.cash-strip strong {
+  color: var(--green);
+}
+
+.form-hint {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.empty-state.compact {
+  padding: 12px;
+  font-size: 0.9rem;
+}
+
 .danger {
   background: var(--red);
 }
@@ -967,6 +1100,10 @@ main {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .order-board {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
   .buyer-layout,
   .ops-grid,
   .merchant-layout,
@@ -1010,7 +1147,9 @@ main {
   }
 
   .menu-grid,
-  .admin-kpis {
+  .admin-kpis,
+  .merchant-kpis,
+  .order-board {
     grid-template-columns: 1fr;
   }
 
