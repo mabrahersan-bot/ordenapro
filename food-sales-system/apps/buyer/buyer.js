@@ -88,16 +88,13 @@ function renderMenu() {
             <footer>
               <strong>${OP.money.format(item.price)}</strong>
               <span class="cash-tag">Efectivo</span>
-              <button class="mini-button" type="button" data-add="${item.id}">Agregar</button>
+              <button class="mini-button" type="button" data-add="${item.id}" onclick="addToCart('${OP.escapeHtml(item.id)}')">Agregar</button>
             </footer>
           </article>
         `,
         )
         .join("")
     : `<div class="empty-state">No hay productos disponibles.</div>`;
-  holder.querySelectorAll("[data-add]").forEach((button) => {
-    button.addEventListener("click", () => addToCart(button.dataset.add));
-  });
 }
 
 function renderCart() {
@@ -274,12 +271,12 @@ function renderHistory() {
             <footer>
               ${
                 ["pending", "preparing"].includes(order.status)
-                  ? `<button class="mini-button danger" type="button" data-cancel="${order.id}">Cancelar</button>`
+                  ? `<button class="mini-button danger" type="button" data-cancel="${order.id}" onclick="cancelOrder('${order.id}')">Cancelar</button>`
                   : ""
               }
               ${
                 order.status === "delivered" && !order.rating
-                  ? `<button class="mini-button" type="button" data-rate="${order.id}">Calificar 5</button>`
+                  ? `<button class="mini-button" type="button" data-rate="${order.id}" onclick="rateOrder('${order.id}')">Calificar 5</button>`
                   : ""
               }
             </footer>
@@ -288,12 +285,6 @@ function renderHistory() {
         )
         .join("")
     : `<div class="empty-state">Aun no hay pedidos.</div>`;
-  holder.querySelectorAll("[data-cancel]").forEach((button) => {
-    button.addEventListener("click", () => cancelOrder(button.dataset.cancel));
-  });
-  holder.querySelectorAll("[data-rate]").forEach((button) => {
-    button.addEventListener("click", () => rateOrder(button.dataset.rate));
-  });
 }
 
 function notifyBuyerChanges() {
