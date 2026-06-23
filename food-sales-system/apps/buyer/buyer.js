@@ -54,7 +54,8 @@ function addressReady() {
 
 function renderMenu() {
   const products = state.menu.filter((item) => item.available);
-  document.getElementById("menuGrid").innerHTML = products.length
+  const holder = document.getElementById("menuGrid");
+  holder.innerHTML = products.length
     ? products
         .map(
           (item) => `
@@ -94,6 +95,9 @@ function renderMenu() {
         )
         .join("")
     : `<div class="empty-state">No hay productos disponibles.</div>`;
+  holder.querySelectorAll("[data-add]").forEach((button) => {
+    button.addEventListener("click", () => addToCart(button.dataset.add));
+  });
 }
 
 function renderCart() {
@@ -251,7 +255,8 @@ function nextBuyerStep(order) {
 
 function renderHistory() {
   const orders = buyerOrders();
-  document.getElementById("buyerHistory").innerHTML = orders.length
+  const holder = document.getElementById("buyerHistory");
+  holder.innerHTML = orders.length
     ? orders
         .slice(0, 6)
         .map(
@@ -283,6 +288,12 @@ function renderHistory() {
         )
         .join("")
     : `<div class="empty-state">Aun no hay pedidos.</div>`;
+  holder.querySelectorAll("[data-cancel]").forEach((button) => {
+    button.addEventListener("click", () => cancelOrder(button.dataset.cancel));
+  });
+  holder.querySelectorAll("[data-rate]").forEach((button) => {
+    button.addEventListener("click", () => rateOrder(button.dataset.rate));
+  });
 }
 
 function notifyBuyerChanges() {
@@ -489,14 +500,6 @@ async function autoRefresh() {
   }
 }
 
-document.addEventListener("click", (event) => {
-  const addButton = event.target.closest("[data-add]");
-  const cancelButton = event.target.closest("[data-cancel]");
-  const rateButton = event.target.closest("[data-rate]");
-  if (addButton) addToCart(addButton.dataset.add);
-  if (cancelButton) cancelOrder(cancelButton.dataset.cancel);
-  if (rateButton) rateOrder(rateButton.dataset.rate);
-});
 document.getElementById("customerDistance").addEventListener("input", renderCoverage);
 document.getElementById("customerAddress").addEventListener("input", renderCoverage);
 document.getElementById("placeOrder").addEventListener("click", placeOrder);
