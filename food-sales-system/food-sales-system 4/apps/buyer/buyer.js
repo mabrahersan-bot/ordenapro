@@ -34,7 +34,17 @@ function cartTotal() {
 }
 
 function currentCosts() {
-  return OP.calculateCosts(cartTotal(), Number(document.getElementById("customerDistance").value), state.settings);
+  const subtotal = cartTotal();
+  if (!subtotal) {
+    return {
+      subtotal: 0,
+      deliveryFee: 0,
+      platformFee: 0,
+      courierCommission: 0,
+      grandTotal: 0,
+    };
+  }
+  return OP.calculateCosts(subtotal, Number(document.getElementById("customerDistance").value), state.settings);
 }
 
 function addressReady() {
@@ -123,6 +133,13 @@ function selectedAddress() {
   );
 }
 
+function buyerOrders() {
+  const phone = state.customer.phone?.trim();
+  if (!state.backendConnected) return state.orders;
+  if (!phone) return [];
+  return state.orders.filter((order) => String(order.customerPhone || "").trim() === phone);
+}
+
 function renderSession() {
   const customer = state.customer;
   const session = OP.getSession("buyer");
@@ -195,7 +212,7 @@ function renderCoverage() {
 }
 
 function renderTracking() {
-  const order = OP.activeTrackedOrder(state);
+  const order = OP.activeTrackedOrder({ ...state, orders: buyerOrders() });
   if (!order) {
     document.getElementById("trackingStatus").textContent = "Sin pedido activo";
     document.getElementById("trackingCopy").innerHTML = `
@@ -233,8 +250,9 @@ function nextBuyerStep(order) {
 }
 
 function renderHistory() {
-  document.getElementById("buyerHistory").innerHTML = state.orders.length
-    ? state.orders
+  const orders = buyerOrders();
+  document.getElementById("buyerHistory").innerHTML = orders.length
+    ? orders
         .slice(0, 6)
         .map(
           (order) => `
@@ -472,9 +490,12 @@ async function autoRefresh() {
 }
 
 document.addEventListener("click", (event) => {
-  if (event.target.dataset.add) addToCart(event.target.dataset.add);
-  if (event.target.dataset.cancel) cancelOrder(event.target.dataset.cancel);
-  if (event.target.dataset.rate) rateOrder(event.target.dataset.rate);
+  const addButton = event.target.closest("[data-add]");
+  const cancelButton = event.target.closest("[data-cancel]");
+  const rateButton = event.target.closest("[data-rate]");
+  if (addButton) addToCart(addButton.dataset.add);
+  if (cancelButton) cancelOrder(cancelButton.dataset.cancel);
+  if (rateButton) rateOrder(rateButton.dataset.rate);
 });
 document.getElementById("customerDistance").addEventListener("input", renderCoverage);
 document.getElementById("customerAddress").addEventListener("input", renderCoverage);
