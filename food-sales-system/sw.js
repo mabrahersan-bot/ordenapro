@@ -1,4 +1,4 @@
-const CACHE_NAME = "ordenapro-v3";
+const CACHE_NAME = "dindu-v13";
 const APP_SHELL = [
   "./",
   "./instalar.html",
@@ -21,7 +21,8 @@ const APP_SHELL = [
   "./apps/courier/courier.js",
   "./apps/admin/index.html",
   "./apps/admin/admin.js",
-  "./assets/icon.svg"
+  "./assets/icon.svg",
+  "./assets/dindu-logo.png"
 ];
 
 self.addEventListener("install", (event) => {
