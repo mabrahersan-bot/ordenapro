@@ -485,7 +485,13 @@ async function autoRefresh() {
   if (refreshing || document.hidden || !canAutoRefresh()) return;
   refreshing = true;
   try {
-    await renderAll();
+    state = await OP.loadSmart();
+    notifyBuyerChanges();
+    renderSession();
+    renderCart();
+    renderCoverage();
+    renderTracking();
+    renderHistory();
   } finally {
     refreshing = false;
   }
