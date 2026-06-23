@@ -3,9 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#207a5a" />
-    <title>OrdenaPro Comprador</title>
+    <meta name="theme-color" content="#d50047" />
+    <title>Dindu Comprador</title>
     <link rel="manifest" href="../../manifest-buyer.webmanifest" />
+    <link rel="apple-touch-icon" href="../../assets/dindu-logo.png" />
     <link rel="stylesheet" href="../../styles.css" />
     <link rel="stylesheet" href="../app.css" />
   </head>
@@ -13,23 +14,33 @@
     <main class="app-main buyer-app">
       <header class="app-header">
         <div>
-          <p class="eyebrow">OrdenaPro comprador</p>
+          <div class="app-brand-line"><img src="../../assets/dindu-logo.png" alt="Dindu" /><span>Dindu</span></div>
+          <p class="eyebrow">Dindu comprador</p>
           <h1 id="buyerGreeting">Comprar en negocios locales</h1>
           <div class="status-chip" id="backendStatus">Modo demo</div>
           <div class="status-chip live-chip">En vivo cada 4s</div>
         </div>
-        <nav class="app-links">
-          <a class="active" href="./index.html">Comprador</a>
-          <a href="../merchant/index.html">Negocio</a>
-          <a href="../courier/index.html">Repartidor</a>
-          <a href="../admin/index.html">Admin</a>
-        </nav>
       </header>
 
-      <section class="pwa-actions" aria-label="Instalacion y avisos">
-        <button class="secondary-button" data-install-app type="button">Instalar app</button>
+      <section class="pwa-actions role-app-note" aria-label="Instalacion y avisos">
+        <span>Para instalar en iPhone: Safari > Compartir > Agregar a pantalla de inicio.</span>
         <button class="secondary-button" data-enable-notifications type="button">Activar avisos</button>
         <span data-pwa-status>Preparando instalacion...</span>
+      </section>
+
+      <section class="buyer-steps" aria-label="Pasos para pedir">
+        <div class="buyer-step active">
+          <strong>1</strong>
+          <span>Elige productos</span>
+        </div>
+        <div class="buyer-step">
+          <strong>2</strong>
+          <span>Confirma direccion</span>
+        </div>
+        <div class="buyer-step">
+          <strong>3</strong>
+          <span>Paga en efectivo</span>
+        </div>
       </section>
 
       <section class="buyer-home">
@@ -76,7 +87,7 @@
             </label>
             <label>
               Nueva direccion
-              <input id="newAddress" type="text" placeholder="Calle, numero, colonia" />
+              <input id="newAddress" type="text" placeholder="Calle, numero, colonia" autocomplete="street-address" />
             </label>
             <label>
               Referencias
@@ -100,15 +111,21 @@
         </div>
 
         <aside class="checkout-panel">
-          <h3>Tu pedido</h3>
+          <div class="checkout-title">
+            <div>
+              <p class="eyebrow">Efectivo al recibir</p>
+              <h3>Tu pedido</h3>
+            </div>
+            <strong id="cashDueTop">$0</strong>
+          </div>
           <div id="cartItems" class="cart-items empty-state">Agrega productos para iniciar.</div>
           <label>
             Nombre del cliente
-            <input id="customerName" type="text" value="Cliente mostrador" />
+            <input id="customerName" type="text" value="Cliente mostrador" autocomplete="name" required />
           </label>
           <label>
             Direccion de entrega
-            <input id="customerAddress" type="text" value="Av. Central 120, Col. Centro" />
+            <input id="customerAddress" type="text" value="Av. Central 120, Col. Centro" autocomplete="street-address" required />
           </label>
           <div class="coverage-box neutral">
             <span>Recoge en: <strong id="pickupPreview">Negocio local</strong></span>
@@ -133,6 +150,7 @@
             <input id="customerNote" type="text" placeholder="Ej. Casa verde, tocar porton" />
           </label>
           <div class="checkout-summary" id="checkoutSummary"></div>
+          <div class="checkout-warning" id="checkoutWarning"></div>
           <div class="cash-callout" id="cashCallout">Prepara efectivo para pagar al recibir.</div>
           <button class="primary-button" id="placeOrder" type="button">Confirmar pedido</button>
         </aside>
@@ -168,6 +186,6 @@
     <script src="../config.js"></script>
     <script src="../shared.js"></script>
     <script src="../pwa.js?v=2"></script>
-    <script src="./buyer.js"></script>
+    <script src="./buyer.js?v=19"></script>
   </body>
 </html>
