@@ -88,7 +88,7 @@ function renderMenu() {
             <footer>
               <strong>${OP.money.format(item.price)}</strong>
               <span class="cash-tag">Efectivo</span>
-              <button class="mini-button" type="button" data-add="${item.id}" onclick="addToCart('${OP.escapeHtml(item.id)}')">Agregar</button>
+              <button class="mini-button" type="button" data-add="${item.id}" onclick="addToCart(this.dataset.add)">Agregar</button>
             </footer>
           </article>
         `,
@@ -271,12 +271,12 @@ function renderHistory() {
             <footer>
               ${
                 ["pending", "preparing"].includes(order.status)
-                  ? `<button class="mini-button danger" type="button" data-cancel="${order.id}" onclick="cancelOrder('${order.id}')">Cancelar</button>`
+                  ? `<button class="mini-button danger" type="button" data-cancel="${order.id}" onclick="cancelOrder(this.dataset.cancel)">Cancelar</button>`
                   : ""
               }
               ${
                 order.status === "delivered" && !order.rating
-                  ? `<button class="mini-button" type="button" data-rate="${order.id}" onclick="rateOrder('${order.id}')">Calificar 5</button>`
+                  ? `<button class="mini-button" type="button" data-rate="${order.id}" onclick="rateOrder(this.dataset.rate)">Calificar 5</button>`
                   : ""
               }
             </footer>
@@ -469,6 +469,10 @@ function rateOrder(orderId) {
   OP.save(state);
   renderAll();
 }
+
+window.addToCart = addToCart;
+window.cancelOrder = cancelOrder;
+window.rateOrder = rateOrder;
 
 async function renderAll() {
   state = await OP.loadSmart();
