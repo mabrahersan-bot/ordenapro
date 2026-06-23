@@ -3,9 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#207a5a" />
-    <title>OrdenaPro Repartidor</title>
+    <meta name="theme-color" content="#d50047" />
+    <title>Dindu Repartidor</title>
     <link rel="manifest" href="../../manifest-courier.webmanifest" />
+    <link rel="apple-touch-icon" href="../../assets/dindu-logo.png" />
     <link rel="stylesheet" href="../../styles.css" />
     <link rel="stylesheet" href="../app.css" />
   </head>
@@ -13,21 +14,16 @@
     <main class="app-main">
       <header class="app-header">
         <div>
-          <p class="eyebrow">OrdenaPro repartidor</p>
+          <div class="app-brand-line"><img src="../../assets/dindu-logo.png" alt="Dindu" /><span>Dindu</span></div>
+          <p class="eyebrow">Dindu repartidor</p>
           <h1>Turno, entregas y GPS</h1>
           <div class="status-chip" id="backendStatus">Modo demo</div>
           <div class="status-chip live-chip">En vivo cada 4s</div>
         </div>
-        <nav class="app-links">
-          <a href="../buyer/index.html">Comprador</a>
-          <a href="../merchant/index.html">Negocio</a>
-          <a class="active" href="./index.html">Repartidor</a>
-          <a href="../admin/index.html">Admin</a>
-        </nav>
       </header>
 
-      <section class="pwa-actions" aria-label="Instalacion y avisos">
-        <button class="secondary-button" data-install-app type="button">Instalar app</button>
+      <section class="pwa-actions role-app-note" aria-label="Instalacion y avisos">
+        <span>Para instalar en iPhone: Safari > Compartir > Agregar a pantalla de inicio.</span>
         <button class="secondary-button" data-enable-notifications type="button">Activar avisos</button>
         <span data-pwa-status>Preparando instalacion...</span>
       </section>
@@ -49,7 +45,16 @@
 
       <section class="ops-grid">
         <article class="panel wide">
-          <h3>Asignaciones</h3>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">Entregas</p>
+              <h3>Turno del repartidor</h3>
+            </div>
+            <div class="status-chip" id="courierShiftStatus">Disponible</div>
+          </div>
+          <div class="courier-kpis" id="courierKpis"></div>
+          <div class="courier-notice" id="courierNotice"></div>
+          <div id="activeDelivery"></div>
           <div id="courierOrders" class="order-list"></div>
         </article>
         <article class="panel">
@@ -63,6 +68,7 @@
         </article>
         <article class="panel">
           <h3>GPS del repartidor</h3>
+          <div class="route-mini" id="routeMini">Toma una entrega para ver la ruta.</div>
           <div class="local-map small-map" aria-label="Mapa GPS del repartidor">
             <div class="coverage-ring"></div>
             <div class="map-road road-a"></div>
