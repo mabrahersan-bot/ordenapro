@@ -1,6 +1,16 @@
 let state = OP.load();
 let refreshing = false;
 let knownPendingOrders = null;
+let merchantNoticeTimer = null;
+
+function showMerchantNotice(message) {
+  const holder = document.getElementById("merchantNotice");
+  if (!holder) return;
+  holder.textContent = message;
+  holder.classList.add("visible");
+  clearTimeout(merchantNoticeTimer);
+  merchantNoticeTimer = setTimeout(() => holder.classList.remove("visible"), 4200);
+}
 
 function canAutoRefresh() {
   const tag = document.activeElement?.tagName;
@@ -12,32 +22,75 @@ function canUseMerchantActions() {
 }
 
 function renderOrders() {
+  const groups = [
+    { title: "Nuevos", status: "pending" },
+    { title: "Preparando", status: "preparing" },
+    { title: "Listos", status: "ready" },
+    { title: "Cerrados", status: "closed" },
+  ];
   document.getElementById("merchantOrders").innerHTML = state.orders.length
-    ? state.orders
-        .map(
-          (order) => `
-          <article class="order-card">
-            <header>
-              <div>
-                <h4>#${order.id} - ${OP.escapeHtml(order.customer)}</h4>
-                <div class="meta">
-                  Recoge: ${OP.escapeHtml(order.pickupAddress)} · Entrega: ${OP.escapeHtml(order.deliveryAddress)} · ${order.distanceKm} km
-                </div>
-                <div class="meta">Telefono: ${OP.escapeHtml(order.customerPhone || "sin telefono")}</div>
-                <div class="meta">${OP.escapeHtml(OP.formatItems(order.items))}</div>
-                <div class="meta">Pago: ${OP.escapeHtml(order.paymentMethod)} · Total cliente: ${OP.money.format(order.grandTotal)} · Nota: ${OP.escapeHtml(order.customerNote || "sin nota")}</div>
-              </div>
-              <span class="badge">${OP.statusLabels[order.status]}</span>
-            </header>
-            <footer>
-              <strong>${OP.money.format(order.total)}</strong>
-              ${merchantAction(order)}
-            </footer>
-          </article>
-        `,
-        )
-        .join("")
+    ? `<div class="order-board">
+        ${groups.map((group) => renderOrderGroup(group)).join("")}
+      </div>`
     : `<div class="empty-state">Aun no hay pedidos.</div>`;
+}
+
+function renderOrderGroup(group) {
+  const orders = state.orders.filter((order) =>
+    group.status === "closed"
+      ? ["assigned", "delivered", "canceled"].includes(order.status)
+      : order.status === group.status,
+  );
+  return `
+    <section class="order-column ${group.status}">
+      <div class="order-column-title">
+        <strong>${group.title}</strong>
+        <span>${orders.length}</span>
+      </div>
+      ${
+        orders.length
+          ? orders.map(renderOrderCard).join("")
+          : `<div class="empty-state compact">Sin pedidos.</div>`
+      }
+    </section>
+  `;
+}
+
+function renderOrderCard(order) {
+  return `
+    <article class="order-card merchant-order ${order.status}">
+      <header>
+        <div>
+          <h4>#${order.id} - ${OP.escapeHtml(order.customer)}</h4>
+          <div class="meta">Entrega: ${OP.escapeHtml(order.deliveryAddress)} · ${order.distanceKm} km</div>
+          <div class="meta">Telefono: ${OP.escapeHtml(order.customerPhone || "sin telefono")}</div>
+          <div class="meta">${OP.escapeHtml(OP.formatItems(order.items))}</div>
+          <div class="meta">Nota: ${OP.escapeHtml(order.customerNote || "sin nota")}</div>
+        </div>
+        <span class="badge ${order.status}">${OP.statusLabels[order.status]}</span>
+      </header>
+      <div class="cash-strip">
+        <span>Cobrar al cliente</span>
+        <strong>${OP.money.format(order.grandTotal)}</strong>
+      </div>
+      <footer>
+        <strong>Productos: ${OP.money.format(order.total)}</strong>
+        ${merchantAction(order)}
+      </footer>
+    </article>
+  `;
+}
+
+function renderKpis() {
+  const active = state.orders.filter((order) => ["pending", "preparing", "ready"].includes(order.status));
+  const pending = state.orders.filter((order) => order.status === "pending").length;
+  const ready = state.orders.filter((order) => order.status === "ready").length;
+  const cash = active.reduce((sum, order) => sum + order.grandTotal, 0);
+  document.getElementById("merchantKpis").innerHTML = `
+    <span><strong>${pending}</strong> nuevos</span>
+    <span><strong>${ready}</strong> listos</span>
+    <span><strong>${OP.money.format(cash)}</strong> por cobrar</span>
+  `;
 }
 
 function renderBusiness() {
@@ -52,6 +105,9 @@ function renderBusiness() {
   document.getElementById("pickupAddress").value = state.business.pickupAddress;
   document.getElementById("businessPhone").value = state.business.phone;
   document.getElementById("businessOpen").checked = state.business.open;
+  const openStatus = document.getElementById("merchantOpenStatus");
+  openStatus.textContent = state.business.open && !state.business.blocked ? "Abierto" : "Cerrado";
+  openStatus.classList.toggle("closed", !state.business.open || state.business.blocked);
 }
 
 function notifyMerchantChanges() {
@@ -92,7 +148,7 @@ function merchantAction(order) {
   }
   if (order.status === "pending") {
     return `
-      <button class="mini-button" type="button" data-status="${order.id}:preparing">Aceptar</button>
+      <button class="mini-button" type="button" data-status="${order.id}:preparing">Aceptar pedido</button>
       <button class="mini-button danger" type="button" data-status="${order.id}:canceled">Cancelar</button>
     `;
   }
@@ -166,7 +222,10 @@ async function createProduct(event) {
   const name = document.getElementById("productName").value.trim();
   const description = document.getElementById("productDescription").value.trim();
   const price = Number(document.getElementById("productPrice").value);
-  if (!name || !description || !price) return;
+  if (!name || !description || !price || price <= 0) {
+    showMerchantNotice("Completa nombre, descripcion y precio valido para publicar.");
+    return;
+  }
   const productId = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
   const product = {
     id: productId,
@@ -185,6 +244,7 @@ async function createProduct(event) {
     OP.save(state);
   }
   clearForm();
+  showMerchantNotice(`${name} publicado en el menu.`);
   await renderAll();
 }
 
@@ -195,6 +255,7 @@ async function updateOrder(orderId, status) {
   }
   const order = state.orders.find((item) => item.id === Number(orderId));
   if (!order) return;
+  if (status === "canceled" && !confirm(`Cancelar pedido #${order.id}?`)) return;
   if (state.backendConnected) {
     await OP.updateBackendOrderStatus(orderId, status, {
       cancel_reason: status === "canceled" ? "Cancelado por el negocio." : undefined,
@@ -204,6 +265,7 @@ async function updateOrder(orderId, status) {
     if (status === "canceled") order.cancelReason = "Cancelado por el negocio.";
     OP.save(state);
   }
+  showMerchantNotice(`Pedido #${order.id}: ${OP.statusLabels[status]}.`);
   await renderAll();
 }
 
@@ -213,10 +275,17 @@ async function saveBusiness(event) {
     document.getElementById("authHint").textContent = "Verifica tu telefono para editar el negocio.";
     return;
   }
+  const businessName = document.getElementById("businessName").value.trim();
+  const pickupAddress = document.getElementById("pickupAddress").value.trim();
+  const phone = document.getElementById("businessPhone").value.trim();
+  if (!businessName || !pickupAddress || !phone) {
+    showMerchantNotice("Completa nombre, direccion de recoleccion y telefono.");
+    return;
+  }
   state.business = {
-    name: document.getElementById("businessName").value.trim() || "Negocio local",
-    pickupAddress: document.getElementById("pickupAddress").value.trim() || "Sin direccion",
-    phone: document.getElementById("businessPhone").value.trim() || "",
+    name: businessName,
+    pickupAddress,
+    phone,
     open: document.getElementById("businessOpen").checked,
     blocked: state.business.blocked,
   };
@@ -230,6 +299,7 @@ async function saveBusiness(event) {
   } else {
     OP.save(state);
   }
+  showMerchantNotice(state.business.open ? "Negocio abierto y datos guardados." : "Negocio cerrado y datos guardados.");
   await renderAll();
 }
 
@@ -246,6 +316,7 @@ async function toggleProduct(productId) {
   } else {
     OP.save(state);
   }
+  showMerchantNotice(`${product.name} ahora esta ${product.available ? "visible" : "oculto"}.`);
   await renderAll();
 }
 
@@ -254,9 +325,12 @@ function deleteProduct(productId) {
     document.getElementById("authHint").textContent = "Verifica tu telefono para eliminar productos.";
     return;
   }
+  const product = state.menu.find((item) => item.id === productId);
+  if (!confirm(`Eliminar ${product?.name || "este producto"} del menu?`)) return;
   state.menu = state.menu.filter((item) => item.id !== productId);
   state.cart = state.cart.filter((line) => line.productId !== productId);
   OP.save(state);
+  showMerchantNotice(`${product?.name || "Producto"} eliminado.`);
   renderAll();
 }
 
@@ -264,6 +338,7 @@ async function renderAll() {
   state = await OP.loadSmart();
   notifyMerchantChanges();
   renderBusiness();
+  renderKpis();
   renderOrders();
   renderMenu();
 }
