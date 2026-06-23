@@ -1,6 +1,16 @@
 let state = OP.load();
 let refreshing = false;
 let lastBuyerOrderStatus = "";
+let buyerNoticeTimer = null;
+
+function showBuyerNotice(message) {
+  const warning = document.getElementById("checkoutWarning");
+  if (!warning) return;
+  warning.textContent = message;
+  warning.classList.add("visible");
+  clearTimeout(buyerNoticeTimer);
+  buyerNoticeTimer = setTimeout(() => warning.classList.remove("visible"), 4200);
+}
 
 function canAutoRefresh() {
   const tag = document.activeElement?.tagName;
@@ -24,7 +34,22 @@ function cartTotal() {
 }
 
 function currentCosts() {
-  return OP.calculateCosts(cartTotal(), Number(document.getElementById("customerDistance").value), state.settings);
+  const subtotal = cartTotal();
+  if (!subtotal) {
+    return {
+      subtotal: 0,
+      deliveryFee: 0,
+      platformFee: 0,
+      courierCommission: 0,
+      grandTotal: 0,
+    };
+  }
+  return OP.calculateCosts(subtotal, Number(document.getElementById("customerDistance").value), state.settings);
+}
+
+function addressReady() {
+  const address = document.getElementById("customerAddress").value.trim();
+  return address.length >= 8 && !address.toLowerCase().includes("sin direccion");
 }
 
 function renderMenu() {
@@ -80,7 +105,7 @@ function renderCart() {
   const holder = document.getElementById("cartItems");
   if (!entries.length) {
     holder.className = "cart-items empty-state";
-    holder.textContent = "Agrega productos para iniciar.";
+    holder.textContent = "Agrega productos para ver tu total en efectivo.";
     return;
   }
 
@@ -106,6 +131,13 @@ function selectedAddress() {
     state.customer.savedAddresses.find((address) => address.id === state.customer.selectedAddressId) ||
     state.customer.savedAddresses[0]
   );
+}
+
+function buyerOrders() {
+  const phone = state.customer.phone?.trim();
+  if (!state.backendConnected) return state.orders;
+  if (!phone) return [];
+  return state.orders.filter((order) => String(order.customerPhone || "").trim() === phone);
 }
 
 function renderSession() {
@@ -147,12 +179,18 @@ function renderSession() {
 function renderCoverage() {
   const distance = Number(document.getElementById("customerDistance").value);
   const isLoggedIn = !state.backendConnected || OP.hasSession("buyer");
-  const isCovered = distance <= OP.coverageKm && OP.canReceiveOrders(state) && isLoggedIn;
+  const hasAddress = addressReady();
+  const hasCart = cartEntries().length > 0;
+  const isCovered = distance <= OP.coverageKm && OP.canReceiveOrders(state) && isLoggedIn && hasAddress && hasCart;
   document.getElementById("distanceLabel").textContent = `${distance.toFixed(1)} km`;
   document.getElementById("coverageLabel").textContent = isCovered
-    ? "Dentro del radio de reparto."
+    ? "Todo listo para confirmar."
     : !isLoggedIn
       ? "Verifica tu telefono antes de pedir."
+      : !hasCart
+      ? "Agrega al menos un producto."
+      : !hasAddress
+      ? "Confirma una direccion completa."
       : state.business.blocked
       ? "Negocio pausado por administracion."
       : !state.business.open || !state.settings.serviceActive
@@ -162,10 +200,11 @@ function renderCoverage() {
   document.getElementById("placeOrder").disabled = !isCovered;
   document.getElementById("pickupPreview").textContent = state.business.pickupAddress;
   const costs = currentCosts();
+  document.getElementById("cashDueTop").textContent = OP.money.format(costs.grandTotal);
   document.getElementById("checkoutSummary").innerHTML = `
     <div><span>Productos</span><strong>${OP.money.format(costs.subtotal)}</strong></div>
     <div><span>Envio estimado</span><strong>${OP.money.format(costs.deliveryFee)}</strong></div>
-    <div><span>Total en efectivo</span><strong>${OP.money.format(costs.grandTotal)}</strong></div>
+    <div class="summary-total"><span>Total en efectivo</span><strong>${OP.money.format(costs.grandTotal)}</strong></div>
   `;
   document.getElementById("cashCallout").textContent = costs.grandTotal
     ? `Prepara ${OP.money.format(costs.grandTotal)} en efectivo para pagar al recibir.`
@@ -173,13 +212,21 @@ function renderCoverage() {
 }
 
 function renderTracking() {
-  const order = OP.activeTrackedOrder(state);
-  if (!order) return;
+  const order = OP.activeTrackedOrder({ ...state, orders: buyerOrders() });
+  if (!order) {
+    document.getElementById("trackingStatus").textContent = "Sin pedido activo";
+    document.getElementById("trackingCopy").innerHTML = `
+      <strong>Aun no tienes pedido en camino</strong>
+      <span>Cuando confirmes un pedido, aqui veras el estado, el total en efectivo y la ubicacion del repartidor.</span>
+    `;
+    return;
+  }
   OP.renderPins(order, "buyer");
   document.getElementById("trackingStatus").textContent =
     order.status === "delivered" ? "Entregado" : `${OP.statusLabels[order.status]} · ${OP.etaMinutes(order)} min`;
   document.getElementById("trackingCopy").innerHTML = `
     <strong>Pedido #${order.id}: ${OP.statusLabels[order.status]}</strong>
+    <span class="next-step">${OP.escapeHtml(nextBuyerStep(order))}</span>
     <span>Recoge en: ${OP.escapeHtml(order.pickupAddress)}</span>
     <span>Entrega en: ${OP.escapeHtml(order.deliveryAddress)} · ${order.distanceKm} km · restan ${OP.remainingKm(order).toFixed(1)} km.</span>
     <span>Pago: ${OP.escapeHtml(order.paymentMethod)} · efectivo a pagar: ${OP.money.format(order.grandTotal)}</span>
@@ -192,9 +239,20 @@ function renderTracking() {
   `;
 }
 
+function nextBuyerStep(order) {
+  if (order.status === "pending") return "El negocio debe aceptar tu pedido.";
+  if (order.status === "preparing") return "El negocio esta preparando tu pedido.";
+  if (order.status === "ready") return "Tu pedido esta listo y espera repartidor.";
+  if (order.status === "assigned") return "El repartidor va en camino.";
+  if (order.status === "delivered") return "Pedido entregado. Puedes calificar el servicio.";
+  if (order.status === "canceled") return "Pedido cancelado. Revisa el motivo en historial.";
+  return "Seguimiento activo.";
+}
+
 function renderHistory() {
-  document.getElementById("buyerHistory").innerHTML = state.orders.length
-    ? state.orders
+  const orders = buyerOrders();
+  document.getElementById("buyerHistory").innerHTML = orders.length
+    ? orders
         .slice(0, 6)
         .map(
           (order) => `
@@ -292,7 +350,10 @@ function saveAddress() {
   const label = document.getElementById("addressLabel").value.trim() || "Direccion";
   const address = document.getElementById("newAddress").value.trim();
   const reference = document.getElementById("addressReference").value.trim();
-  if (!address) return;
+  if (!address || address.length < 8) {
+    showBuyerNotice("Escribe una direccion completa antes de guardarla.");
+    return;
+  }
   const id = `addr-${Date.now()}`;
   state.customer.savedAddresses.push({ id, label, address, reference });
   state.customer.selectedAddressId = id;
@@ -300,6 +361,7 @@ function saveAddress() {
   document.getElementById("newAddress").value = "";
   document.getElementById("addressReference").value = "";
   OP.save(state);
+  showBuyerNotice("Direccion guardada y seleccionada.");
   renderAll();
 }
 
@@ -308,9 +370,21 @@ async function placeOrder() {
   const distanceKm = Number(document.getElementById("customerDistance").value);
   if (state.backendConnected && !OP.hasSession("buyer")) {
     document.getElementById("loginHint").textContent = "Verifica tu telefono para confirmar el pedido.";
+    showBuyerNotice("Primero verifica tu telefono.");
     return;
   }
-  if (!entries.length || distanceKm > OP.coverageKm) return;
+  if (!entries.length) {
+    showBuyerNotice("Agrega al menos un producto para pedir.");
+    return;
+  }
+  if (!addressReady()) {
+    showBuyerNotice("Confirma tu direccion de entrega antes de pedir.");
+    return;
+  }
+  if (distanceKm > OP.coverageKm) {
+    showBuyerNotice("La direccion queda fuera del radio de 10 km.");
+    return;
+  }
 
   const now = new Date();
   const costs = currentCosts();
@@ -416,11 +490,15 @@ async function autoRefresh() {
 }
 
 document.addEventListener("click", (event) => {
-  if (event.target.dataset.add) addToCart(event.target.dataset.add);
-  if (event.target.dataset.cancel) cancelOrder(event.target.dataset.cancel);
-  if (event.target.dataset.rate) rateOrder(event.target.dataset.rate);
+  const addButton = event.target.closest("[data-add]");
+  const cancelButton = event.target.closest("[data-cancel]");
+  const rateButton = event.target.closest("[data-rate]");
+  if (addButton) addToCart(addButton.dataset.add);
+  if (cancelButton) cancelOrder(cancelButton.dataset.cancel);
+  if (rateButton) rateOrder(rateButton.dataset.rate);
 });
 document.getElementById("customerDistance").addEventListener("input", renderCoverage);
+document.getElementById("customerAddress").addEventListener("input", renderCoverage);
 document.getElementById("placeOrder").addEventListener("click", placeOrder);
 document.getElementById("loginButton").addEventListener("click", loginBuyer);
 document.getElementById("verifyButton").addEventListener("click", verifyBuyer);
