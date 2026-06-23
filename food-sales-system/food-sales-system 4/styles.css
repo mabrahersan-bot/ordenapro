@@ -795,6 +795,135 @@ main {
   display: block;
 }
 
+.courier-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.courier-kpis span {
+  display: grid;
+  gap: 4px;
+  min-height: 74px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.courier-kpis strong {
+  color: var(--green-dark);
+  font-size: 1.2rem;
+}
+
+.courier-notice {
+  display: none;
+  margin: 12px 0;
+  border: 1px solid rgba(213, 0, 71, 0.25);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff0f5;
+  color: var(--green-dark);
+  font-weight: 850;
+}
+
+.courier-notice.visible {
+  display: block;
+}
+
+.courier-active {
+  margin-bottom: 14px;
+  border-color: rgba(213, 0, 71, 0.38);
+  background: #fffafd;
+  box-shadow: 0 12px 28px rgba(213, 0, 71, 0.08);
+}
+
+.courier-job {
+  margin-top: 10px;
+}
+
+.courier-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 14px 0 8px;
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.courier-section-title span {
+  display: grid;
+  min-width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--green-dark);
+}
+
+.courier-money {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.courier-money span {
+  display: grid;
+  gap: 4px;
+  border: 1px dashed rgba(213, 0, 71, 0.35);
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff;
+}
+
+.courier-money small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.courier-money strong {
+  color: var(--green);
+}
+
+.delivery-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.delivery-steps span {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+.delivery-steps span.done {
+  border-color: rgba(213, 0, 71, 0.35);
+  background: #fff0f5;
+  color: var(--green-dark);
+}
+
+.route-mini {
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  color: var(--muted);
+  font-weight: 800;
+}
+
 .order-board {
   display: grid;
   grid-template-columns: repeat(4, minmax(220px, 1fr));
@@ -1149,7 +1278,13 @@ main {
   .menu-grid,
   .admin-kpis,
   .merchant-kpis,
+  .courier-kpis,
   .order-board {
+    grid-template-columns: 1fr;
+  }
+
+  .courier-money,
+  .delivery-steps {
     grid-template-columns: 1fr;
   }
 
