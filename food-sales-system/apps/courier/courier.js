@@ -2,6 +2,16 @@ let state = OP.load();
 let refreshing = false;
 let gpsWatchId = null;
 let knownReadyOrders = null;
+let courierNoticeTimer = null;
+
+function showCourierNotice(message) {
+  const holder = document.getElementById("courierNotice");
+  if (!holder) return;
+  holder.textContent = message;
+  holder.classList.add("visible");
+  clearTimeout(courierNoticeTimer);
+  courierNoticeTimer = setTimeout(() => holder.classList.remove("visible"), 4200);
+}
 
 function canAutoRefresh() {
   const tag = document.activeElement?.tagName;
@@ -12,14 +22,81 @@ function canUseCourierActions() {
   return !state.backendConnected || OP.hasSession("courier");
 }
 
+function deliveryStep(order) {
+  const progress = order?.gpsProgress || 0;
+  if (!order) return "none";
+  if (order.status === "ready") return "available";
+  if (order.status === "delivered") return "delivered";
+  if (progress >= 72) return "to-customer";
+  if (progress >= 46) return "picked-up";
+  if (progress >= 24) return "at-store";
+  return "accepted";
+}
+
+function stepLabel(order) {
+  const labels = {
+    available: "Disponible",
+    accepted: "Aceptada",
+    "at-store": "En negocio",
+    "picked-up": "Pedido recogido",
+    "to-customer": "Camino al cliente",
+    delivered: "Entregado",
+  };
+  return labels[deliveryStep(order)] || "Sin entrega";
+}
+
+function routeText(order) {
+  if (!order) return "Toma una entrega para ver la ruta.";
+  return `Recoge en ${order.pickupAddress}. Entrega en ${order.deliveryAddress}. Distancia ${order.distanceKm} km.`;
+}
+
+function moneyBreakdown(order) {
+  return `
+    <div class="courier-money">
+      <span><small>Cobrar cliente</small><strong>${OP.money.format(order.grandTotal)}</strong></span>
+      <span><small>Entregar negocio</small><strong>${OP.money.format(order.total)}</strong></span>
+      <span><small>Tu comision</small><strong>${OP.money.format(order.courierCommission)}</strong></span>
+    </div>
+  `;
+}
+
+function deliveryChecklist(order) {
+  const step = deliveryStep(order);
+  const done = {
+    accepted: ["accepted", "at-store", "picked-up", "to-customer", "delivered"].includes(step),
+    "at-store": ["at-store", "picked-up", "to-customer", "delivered"].includes(step),
+    "picked-up": ["picked-up", "to-customer", "delivered"].includes(step),
+    "to-customer": ["to-customer", "delivered"].includes(step),
+    delivered: step === "delivered",
+  };
+  return `
+    <div class="delivery-steps">
+      <span class="${done.accepted ? "done" : ""}">1. Aceptada</span>
+      <span class="${done["at-store"] ? "done" : ""}">2. Llegue al negocio</span>
+      <span class="${done["picked-up"] ? "done" : ""}">3. Pedido recogido</span>
+      <span class="${done["to-customer"] ? "done" : ""}">4. En camino</span>
+      <span class="${done.delivered ? "done" : ""}">5. Entregado</span>
+    </div>
+  `;
+}
+
 function action(order) {
   if (!canUseCourierActions()) {
     return `<span class="meta">Verifica tu telefono para tomar entregas.</span>`;
   }
   if (order.status === "ready") return `<button class="mini-button" type="button" data-take="${order.id}">Tomar entrega</button>`;
   if (order.status === "assigned") {
+    const step = deliveryStep(order);
+    const nextLabel =
+      step === "accepted"
+        ? "Llegue al negocio"
+        : step === "at-store"
+          ? "Recogi pedido"
+          : step === "picked-up"
+            ? "Voy al cliente"
+            : "Avanzar GPS";
     return `
-      <button class="mini-button" type="button" data-progress="${order.id}">Avanzar GPS</button>
+      <button class="mini-button" type="button" data-progress="${order.id}">${nextLabel}</button>
       <button class="mini-button" type="button" data-deliver="${order.id}">Entregar</button>
     `;
   }
@@ -27,12 +104,44 @@ function action(order) {
 }
 
 function renderOrders() {
-  const orders = state.orders.filter((order) => ["ready", "assigned", "delivered"].includes(order.status));
-  document.getElementById("courierOrders").innerHTML = orders.length
-    ? orders
-        .map(
-          (order) => `
-          <article class="order-card">
+  const active = state.orders.find((order) => order.status === "assigned");
+  const readyOrders = state.orders.filter((order) => order.status === "ready");
+  const deliveredOrders = state.orders.filter((order) => order.status === "delivered" && order.courier).slice(0, 3);
+  document.getElementById("activeDelivery").innerHTML = active
+    ? `
+      <article class="order-card courier-active">
+        <header>
+          <div>
+            <p class="eyebrow">Entrega activa</p>
+            <h4>#${active.id} - ${OP.escapeHtml(active.customer)}</h4>
+            <div class="meta">Paso actual: ${stepLabel(active)} · ETA ${OP.etaMinutes(active)} min</div>
+            <div class="meta">${OP.escapeHtml(routeText(active))}</div>
+            <div class="meta">Cliente: ${OP.escapeHtml(active.customerPhone || "sin telefono")} · Nota: ${OP.escapeHtml(active.customerNote || "sin nota")}</div>
+            <div class="meta">${OP.escapeHtml(OP.formatItems(active.items))}</div>
+          </div>
+          <span class="badge ${active.status}">${OP.statusLabels[active.status]}</span>
+        </header>
+        ${moneyBreakdown(active)}
+        ${deliveryChecklist(active)}
+        <footer>
+          <strong>Restan ${OP.remainingKm(active).toFixed(1)} km</strong>
+          ${action(active)}
+        </footer>
+      </article>
+    `
+    : `<div class="empty-state compact">No tienes una entrega activa.</div>`;
+
+  document.getElementById("courierOrders").innerHTML = `
+    <div class="courier-section-title">
+      <strong>Disponibles para tomar</strong>
+      <span>${readyOrders.length}</span>
+    </div>
+    ${
+      readyOrders.length
+        ? readyOrders
+            .map(
+              (order) => `
+          <article class="order-card courier-job">
             <header>
               <div>
                 <h4>#${order.id} - ${OP.escapeHtml(order.customer)}</h4>
@@ -40,20 +149,46 @@ function renderOrders() {
                 <div class="meta">Entregar en: ${OP.escapeHtml(order.deliveryAddress)} · ${order.distanceKm} km</div>
                 <div class="meta">Cliente: ${OP.escapeHtml(order.customer)} · ${OP.escapeHtml(order.customerPhone || "sin telefono")}</div>
                 <div class="meta">${OP.escapeHtml(OP.formatItems(order.items))}</div>
-                <div class="meta">Pago: ${OP.escapeHtml(order.paymentMethod)} · Cobrar: ${OP.money.format(order.grandTotal)} · Comision: ${OP.money.format(order.courierCommission)}</div>
+                <div class="meta">Pago: ${OP.escapeHtml(order.paymentMethod)} · ETA ${OP.etaMinutes(order)} min</div>
                 <div class="meta">Nota: ${OP.escapeHtml(order.customerNote || "sin nota")}</div>
               </div>
-              <span class="badge">${OP.statusLabels[order.status]}</span>
+              <span class="badge ${order.status}">${OP.statusLabels[order.status]}</span>
             </header>
+            ${moneyBreakdown(order)}
             <footer>
-              <strong>${OP.money.format(order.total)}</strong>
+              <strong>${order.distanceKm} km</strong>
               ${action(order)}
             </footer>
           </article>
         `,
-        )
-        .join("")
-    : `<div class="empty-state">No hay entregas listas.</div>`;
+            )
+            .join("")
+        : `<div class="empty-state compact">No hay pedidos listos por ahora.</div>`
+    }
+    <div class="courier-section-title">
+      <strong>Entregadas recientes</strong>
+      <span>${deliveredOrders.length}</span>
+    </div>
+    ${
+      deliveredOrders.length
+        ? deliveredOrders
+            .map(
+              (order) => `
+          <article class="order-card courier-job delivered">
+            <header>
+              <div>
+                <h4>#${order.id} - ${OP.escapeHtml(order.customer)}</h4>
+                <div class="meta">Cobrado: ${OP.money.format(order.grandTotal)} · Comision: ${OP.money.format(order.courierCommission)}</div>
+              </div>
+              <span class="badge delivered">${OP.statusLabels[order.status]}</span>
+            </header>
+          </article>
+        `,
+            )
+            .join("")
+        : `<div class="empty-state compact">Aun no hay entregas cerradas.</div>`
+    }
+  `;
 }
 
 function renderSummary() {
@@ -65,6 +200,8 @@ function renderSummary() {
     ? "Conectado a base de datos"
     : "Modo demo local";
   const assigned = state.orders.find((order) => order.status === "assigned") || OP.activeTrackedOrder(state);
+  const active = state.orders.find((order) => order.status === "assigned");
+  const ready = state.orders.filter((order) => order.status === "ready").length;
   const taken = state.orders.filter((order) => order.courier).length;
   const delivered = state.orders.filter((order) => order.status === "delivered").length;
   document.getElementById("courierTaken").textContent = taken;
@@ -74,6 +211,14 @@ function renderSummary() {
     .reduce((sum, order) => sum + order.courierCommission, 0);
   document.getElementById("courierEarnings").textContent = OP.money.format(earnings);
   document.getElementById("courierDistance").textContent = `${OP.remainingKm(assigned).toFixed(1)} km`;
+  document.getElementById("courierShiftStatus").textContent = active ? "En entrega" : "Disponible";
+  document.getElementById("courierShiftStatus").classList.toggle("closed", Boolean(active));
+  document.getElementById("courierKpis").innerHTML = `
+    <span><strong>${ready}</strong> disponibles</span>
+    <span><strong>${active ? OP.money.format(active.grandTotal) : "$0"}</strong> a cobrar</span>
+    <span><strong>${active ? OP.money.format(active.courierCommission) : "$0"}</strong> comision activa</span>
+  `;
+  document.getElementById("routeMini").textContent = routeText(active);
   OP.renderPins(assigned, "courier");
   renderGpsStatus(assigned);
 }
@@ -134,6 +279,7 @@ async function take(orderId) {
     order.gpsProgress = Math.max(order.gpsProgress || 0, 12);
     OP.save(state);
   }
+  showCourierNotice(`Entrega #${order.id} tomada. Cobra ${OP.money.format(order.grandTotal)} al cliente.`);
   window.OrdenaPWA?.notify("Entrega tomada", `Recoge el pedido #${order.id} en ${order.pickupAddress}.`);
   await renderAll();
 }
@@ -145,6 +291,7 @@ async function deliver(orderId) {
   }
   const order = state.orders.find((item) => item.id === Number(orderId));
   if (!order) return;
+  if (!confirm(`Confirmar entrega #${order.id}? Debiste cobrar ${OP.money.format(order.grandTotal)} al cliente.`)) return;
   if (state.backendConnected) {
     await OP.updateBackendOrderStatus(orderId, "delivered", {}, "courier");
   } else {
@@ -153,6 +300,7 @@ async function deliver(orderId) {
     order.gpsProgress = 100;
     OP.save(state);
   }
+  showCourierNotice(`Entrega #${order.id} cerrada. Comision: ${OP.money.format(order.courierCommission)}.`);
   await renderAll();
 }
 
@@ -165,13 +313,15 @@ async function progress(orderId) {
     state.orders.find((item) => item.id === Number(orderId)) ||
     state.orders.find((item) => item.status === "assigned");
   if (!order || order.status !== "assigned") return;
-  const nextProgress = Math.min((order.gpsProgress || 0) + 22, 96);
+  const current = order.gpsProgress || 0;
+  const nextProgress = current < 24 ? 24 : current < 46 ? 46 : current < 72 ? 72 : Math.min(current + 18, 96);
   if (state.backendConnected) {
     await OP.updateBackendGps(order.id, nextProgress);
   } else {
     order.gpsProgress = nextProgress;
     OP.save(state);
   }
+  showCourierNotice(`Pedido #${order.id}: ${stepLabel({ ...order, gpsProgress: nextProgress })}.`);
   await renderAll();
 }
 
