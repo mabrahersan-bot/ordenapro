@@ -1,6 +1,15 @@
 let state = OP.load();
 let refreshing = false;
 let knownAdminOrders = null;
+let adminNoticeTimer = null;
+
+function showAdminNotice(message) {
+  const holder = document.getElementById("adminAlerts");
+  if (!holder) return;
+  holder.innerHTML = `<div class="admin-alert important">${OP.escapeHtml(message)}</div>`;
+  clearTimeout(adminNoticeTimer);
+  adminNoticeTimer = setTimeout(renderAlerts, 4200);
+}
 
 function canAutoRefresh() {
   const tag = document.activeElement?.tagName;
@@ -25,15 +34,80 @@ function renderKpis() {
   document.getElementById("backendStatus").textContent = state.backendConnected
     ? "Conectado a base de datos"
     : "Modo demo local";
-  const revenue = state.orders.reduce((sum, order) => sum + order.total, 0);
+  const revenue = state.orders.reduce((sum, order) => sum + order.grandTotal, 0);
   const average = state.orders.length ? revenue / state.orders.length : 0;
   const pending = state.orders.filter((order) => !["delivered", "canceled"].includes(order.status)).length;
   const platform = state.orders.reduce((sum, order) => sum + order.platformFee, 0);
+  const activeCourier = state.orders.some((order) => order.status === "assigned");
   document.getElementById("adminRevenue").textContent = OP.money.format(revenue);
   document.getElementById("adminOrders").textContent = state.orders.length;
   document.getElementById("adminAverage").textContent = OP.money.format(average);
   document.getElementById("adminPending").textContent = pending;
   document.getElementById("adminPlatform").textContent = OP.money.format(platform);
+  document.getElementById("adminServiceStatus").textContent = state.settings.serviceActive ? "Activo" : "Pausado";
+  document.getElementById("adminBusinessStatus").textContent = state.business.blocked
+    ? "Bloqueado"
+    : state.business.open
+      ? "Abierto"
+      : "Cerrado";
+  document.getElementById("adminCourierStatus").textContent = activeCourier ? "En ruta" : "Disponible";
+  document.getElementById("adminLiveStatus").textContent = pending ? `${pending} activos` : "Sin pendientes";
+}
+
+function cashTotals() {
+  const validOrders = state.orders.filter((order) => order.status !== "canceled");
+  const deliveredOrders = validOrders.filter((order) => order.status === "delivered");
+  return {
+    customerCash: validOrders.reduce((sum, order) => sum + order.grandTotal, 0),
+    merchantDue: validOrders.reduce((sum, order) => sum + order.total, 0),
+    courierDue: validOrders.reduce((sum, order) => sum + order.courierCommission, 0),
+    platformDue: validOrders.reduce((sum, order) => sum + order.platformFee, 0),
+    deliveredCash: deliveredOrders.reduce((sum, order) => sum + order.grandTotal, 0),
+  };
+}
+
+function buildAlerts() {
+  const alerts = [];
+  if (!state.settings.serviceActive) alerts.push("Servicio pausado: compradores no deberian generar pedidos nuevos.");
+  if (state.business.blocked) alerts.push("Negocio bloqueado: revisar incidencia antes de reactivar.");
+  if (!state.business.open) alerts.push("Negocio cerrado: no esta recibiendo pedidos.");
+  const noCourier = state.orders.filter((order) => order.status === "ready" && !order.courier);
+  if (noCourier.length) alerts.push(`${noCourier.length} pedido${noCourier.length === 1 ? "" : "s"} listo sin repartidor.`);
+  const noGps = state.orders.filter((order) => order.status === "assigned" && !order.courierLat);
+  if (noGps.length) alerts.push(`${noGps.length} entrega${noGps.length === 1 ? "" : "s"} en ruta sin GPS real.`);
+  const canceled = state.orders.filter((order) => order.status === "canceled");
+  if (canceled.length) alerts.push(`${canceled.length} pedido${canceled.length === 1 ? "" : "s"} cancelado.`);
+  return alerts;
+}
+
+function renderCashBoard() {
+  const totals = cashTotals();
+  document.getElementById("adminCashBoard").innerHTML = `
+    <article><span>Cobrar clientes</span><strong>${OP.money.format(totals.customerCash)}</strong></article>
+    <article><span>Para negocios</span><strong>${OP.money.format(totals.merchantDue)}</strong></article>
+    <article><span>Comisiones reparto</span><strong>${OP.money.format(totals.courierDue)}</strong></article>
+    <article><span>Plataforma</span><strong>${OP.money.format(totals.platformDue)}</strong></article>
+  `;
+}
+
+function renderAlerts() {
+  const alerts = buildAlerts();
+  document.getElementById("adminAlertCount").textContent = alerts.length;
+  document.getElementById("adminAlerts").innerHTML = alerts.length
+    ? alerts.map((alert) => `<div class="admin-alert">${OP.escapeHtml(alert)}</div>`).join("")
+    : `<div class="admin-alert ok">Sin alertas criticas.</div>`;
+}
+
+function orderPriority(order) {
+  const weights = {
+    pending: 1,
+    preparing: 2,
+    ready: 3,
+    assigned: 4,
+    canceled: 5,
+    delivered: 6,
+  };
+  return weights[order.status] || 9;
 }
 
 function notifyAdminChanges() {
@@ -71,16 +145,23 @@ async function verifyAuthCode() {
 function renderOrders() {
   document.getElementById("adminOrdersList").innerHTML = state.orders.length
     ? state.orders
+        .slice()
+        .sort((a, b) => orderPriority(a) - orderPriority(b) || b.id - a.id)
         .map(
           (order) => `
-          <article class="order-card">
+          <article class="order-card admin-order ${order.status}">
             <header>
               <div>
                 <h4>#${order.id} - ${OP.escapeHtml(order.customer)}</h4>
                 <div class="meta">Recoge: ${OP.escapeHtml(order.pickupAddress)} · Entrega: ${OP.escapeHtml(order.deliveryAddress)}</div>
                 <div class="meta">Telefono comprador: ${OP.escapeHtml(order.customerPhone || "sin telefono")}</div>
                 <div class="meta">${order.distanceKm} km · ${OP.escapeHtml(OP.formatItems(order.items))}</div>
-                <div class="meta">Pago: ${OP.escapeHtml(order.paymentMethod)} · Cliente: ${OP.money.format(order.grandTotal)} · Envio: ${OP.money.format(order.deliveryFee)} · Plataforma: ${OP.money.format(order.platformFee)}</div>
+                <div class="meta">Pago: ${OP.escapeHtml(order.paymentMethod)} · Cliente: ${OP.money.format(order.grandTotal)} · Envio: ${OP.money.format(order.deliveryFee)} · Plataforma: ${OP.money.format(order.platformFee)} · Repartidor: ${OP.money.format(order.courierCommission)}</div>
+                <div class="admin-cash-line">
+                  <span>Cliente ${OP.money.format(order.grandTotal)}</span>
+                  <span>Negocio ${OP.money.format(order.total)}</span>
+                  <span>Reparto ${OP.money.format(order.courierCommission)}</span>
+                </div>
                 ${
                   order.courierLat && order.courierLng
                     ? `<div class="meta">GPS repartidor: ${Number(order.courierLat).toFixed(5)}, ${Number(order.courierLng).toFixed(5)} · ${Math.round(order.courierAccuracy || 0)} m</div>`
@@ -88,7 +169,7 @@ function renderOrders() {
                 }
                 ${order.cancelReason ? `<div class="meta">Cancelacion: ${OP.escapeHtml(order.cancelReason)}</div>` : ""}
               </div>
-              <span class="badge">${OP.statusLabels[order.status]}</span>
+              <span class="badge ${order.status}">${OP.statusLabels[order.status]}</span>
             </header>
             <footer>
               <strong>${OP.money.format(order.total)}</strong>
@@ -116,6 +197,8 @@ function renderSettings() {
   document.getElementById("baseDeliveryFee").value = state.settings.baseDeliveryFee;
   document.getElementById("perKmFee").value = state.settings.perKmFee;
   document.getElementById("platformRate").value = Math.round(state.settings.platformRate * 100);
+  document.getElementById("courierBaseCommission").value = state.settings.courierBaseCommission;
+  document.getElementById("courierPerKmCommission").value = state.settings.courierPerKmCommission;
   const locked = state.backendConnected && !OP.hasSession("admin");
   [
     "resetDemo",
@@ -128,6 +211,26 @@ function renderSettings() {
   ].forEach((id) => {
     document.getElementById(id).disabled = locked;
   });
+}
+
+function renderOpsSummary() {
+  const active = state.orders.filter((order) => ["pending", "preparing", "ready", "assigned"].includes(order.status));
+  const assigned = state.orders.filter((order) => order.status === "assigned");
+  const ready = state.orders.filter((order) => order.status === "ready");
+  const totals = cashTotals();
+  document.getElementById("adminOpsSummary").innerHTML = `
+    <div class="admin-summary-card">
+      <span>${OP.escapeHtml(state.business.name)}</span>
+      <strong>${state.business.open && !state.business.blocked ? "Operando" : "Revisar"}</strong>
+      <small>${OP.escapeHtml(state.business.pickupAddress)}</small>
+    </div>
+    <div class="admin-summary-grid">
+      <span><strong>${active.length}</strong> activos</span>
+      <span><strong>${ready.length}</strong> listos</span>
+      <span><strong>${assigned.length}</strong> repartiendo</span>
+      <span><strong>${OP.money.format(totals.deliveredCash)}</strong> entregado</span>
+    </div>
+  `;
 }
 
 function renderMenu() {
@@ -169,6 +272,8 @@ async function setOrderStatus(orderId, status) {
   if (!requireAdmin("Verifica admin para cambiar estados.")) return;
   const order = state.orders.find((item) => item.id === Number(orderId));
   if (!order) return;
+  if (status === "canceled" && !confirm(`Cancelar pedido #${order.id}?`)) return;
+  if (status === "delivered" && !confirm(`Marcar pedido #${order.id} como entregado?`)) return;
   if (state.backendConnected) {
     await OP.updateBackendOrderStatus(orderId, status, {
       courier_user_id: status === "assigned" ? 3 : undefined,
@@ -184,6 +289,7 @@ async function setOrderStatus(orderId, status) {
     if (status === "canceled") order.cancelReason = "Cancelado por administrador.";
     OP.save(state);
   }
+  showAdminNotice(`Pedido #${order.id}: ${OP.statusLabels[status]}.`);
   await renderAll();
 }
 
@@ -197,6 +303,7 @@ async function toggleProduct(productId) {
   } else {
     OP.save(state);
   }
+  showAdminNotice(`${product.name} ahora esta ${product.available ? "visible" : "oculto"}.`);
   await renderAll();
 }
 
@@ -210,6 +317,7 @@ function saveNote() {
   });
   document.getElementById("adminNote").value = "";
   OP.save(state);
+  showAdminNotice("Nota interna guardada.");
   renderAll();
 }
 
@@ -226,6 +334,7 @@ async function forceReady() {
     if (["pending", "preparing"].includes(order.status)) order.status = "ready";
   });
   OP.save(state);
+  showAdminNotice("Pedidos pendientes marcados como listos.");
   renderAll();
 }
 
@@ -246,6 +355,7 @@ async function assignCourier() {
     }
   });
   OP.save(state);
+  showAdminNotice("Pedidos listos asignados al repartidor demo.");
   renderAll();
 }
 
@@ -257,6 +367,7 @@ async function toggleService() {
   } else {
     OP.save(state);
   }
+  showAdminNotice(state.settings.serviceActive ? "Servicio activado." : "Servicio pausado.");
   await renderAll();
 }
 
@@ -268,6 +379,7 @@ async function toggleBusinessBlock() {
   } else {
     OP.save(state);
   }
+  showAdminNotice(state.business.blocked ? "Negocio bloqueado." : "Negocio desbloqueado.");
   await renderAll();
 }
 
@@ -276,11 +388,14 @@ async function saveSettings() {
   state.settings.baseDeliveryFee = Number(document.getElementById("baseDeliveryFee").value) || 0;
   state.settings.perKmFee = Number(document.getElementById("perKmFee").value) || 0;
   state.settings.platformRate = (Number(document.getElementById("platformRate").value) || 0) / 100;
+  state.settings.courierBaseCommission = Number(document.getElementById("courierBaseCommission").value) || 0;
+  state.settings.courierPerKmCommission = Number(document.getElementById("courierPerKmCommission").value) || 0;
   if (state.backendConnected) {
     await OP.updateBackendSettings(state.settings);
   } else {
     OP.save(state);
   }
+  showAdminNotice("Tarifas actualizadas.");
   await renderAll();
 }
 
@@ -288,7 +403,10 @@ async function renderAll() {
   state = await OP.loadSmart();
   notifyAdminChanges();
   renderKpis();
+  renderCashBoard();
+  renderAlerts();
   renderOrders();
+  renderOpsSummary();
   renderMenu();
   renderNotes();
   renderSettings();
