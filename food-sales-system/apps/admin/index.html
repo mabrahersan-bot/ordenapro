@@ -3,9 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#207a5a" />
-    <title>OrdenaPro Administrador</title>
+    <meta name="theme-color" content="#d50047" />
+    <title>Dindu Administrador</title>
     <link rel="manifest" href="../../manifest-admin.webmanifest" />
+    <link rel="apple-touch-icon" href="../../assets/dindu-logo.png" />
     <link rel="stylesheet" href="../../styles.css" />
     <link rel="stylesheet" href="../app.css" />
   </head>
@@ -13,21 +14,16 @@
     <main class="app-main">
       <header class="app-header">
         <div>
-          <p class="eyebrow">OrdenaPro administrador</p>
+          <div class="app-brand-line"><img src="../../assets/dindu-logo.png" alt="Dindu" /><span>Dindu</span></div>
+          <p class="eyebrow">Dindu administrador</p>
           <h1>Control global de operaciones</h1>
           <div class="status-chip" id="backendStatus">Modo demo</div>
           <div class="status-chip live-chip">En vivo cada 4s</div>
         </div>
-        <nav class="app-links">
-          <a href="../buyer/index.html">Comprador</a>
-          <a href="../merchant/index.html">Negocio</a>
-          <a href="../courier/index.html">Repartidor</a>
-          <a class="active" href="./index.html">Admin</a>
-        </nav>
       </header>
 
-      <section class="pwa-actions" aria-label="Instalacion y avisos">
-        <button class="secondary-button" data-install-app type="button">Instalar app</button>
+      <section class="pwa-actions role-app-note" aria-label="Instalacion y avisos">
+        <span>Para instalar en iPhone: Safari > Compartir > Agregar a pantalla de inicio.</span>
         <button class="secondary-button" data-enable-notifications type="button">Activar avisos</button>
         <span data-pwa-status>Preparando instalacion...</span>
       </section>
@@ -55,9 +51,36 @@
         <article><span>Comision plataforma</span><strong id="adminPlatform">$0</strong></article>
       </section>
 
+      <section class="admin-command">
+        <article>
+          <span>Servicio</span>
+          <strong id="adminServiceStatus">Activo</strong>
+        </article>
+        <article>
+          <span>Negocio</span>
+          <strong id="adminBusinessStatus">Abierto</strong>
+        </article>
+        <article>
+          <span>Reparto</span>
+          <strong id="adminCourierStatus">Disponible</strong>
+        </article>
+        <article>
+          <span>Alertas</span>
+          <strong id="adminAlertCount">0</strong>
+        </article>
+      </section>
+
       <section class="control-grid three">
         <article class="panel wide">
-          <h3>Pedidos e incidencias</h3>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">Operacion</p>
+              <h3>Pedidos e incidencias</h3>
+            </div>
+            <div class="status-chip" id="adminLiveStatus">Monitoreando</div>
+          </div>
+          <div class="admin-cash-board" id="adminCashBoard"></div>
+          <div class="admin-alerts" id="adminAlerts"></div>
           <div id="adminOrdersList" class="order-list"></div>
         </article>
 
@@ -72,6 +95,8 @@
             <label>Envio base<input id="baseDeliveryFee" type="number" min="0" /></label>
             <label>Costo por km<input id="perKmFee" type="number" min="0" /></label>
             <label>Comision plataforma %<input id="platformRate" type="number" min="0" max="50" /></label>
+            <label>Comision repartidor base<input id="courierBaseCommission" type="number" min="0" /></label>
+            <label>Comision repartidor por km<input id="courierPerKmCommission" type="number" min="0" /></label>
             <button class="secondary-button" id="saveSettings" type="button">Guardar tarifas</button>
             <textarea id="adminNote" placeholder="Nota interna o incidencia"></textarea>
             <button class="primary-button" id="saveNote" type="button">Guardar nota</button>
@@ -79,7 +104,8 @@
         </article>
 
         <article class="panel">
-          <h3>Menu y notas</h3>
+          <h3>Negocio, repartidores y notas</h3>
+          <div id="adminOpsSummary" class="admin-ops-summary"></div>
           <div id="adminMenu" class="compact-list"></div>
           <div id="adminNotes" class="timeline"></div>
         </article>
