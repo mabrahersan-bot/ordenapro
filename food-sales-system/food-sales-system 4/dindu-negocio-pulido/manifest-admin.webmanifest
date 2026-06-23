@@ -1,0 +1,19 @@
+{
+  "name": "Dindu Admin",
+  "short_name": "Admin",
+  "description": "Panel de control para pedidos, tarifas, comercios e incidencias.",
+  "start_url": "./apps/admin/index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff4f8",
+  "theme_color": "#d50047",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./assets/dindu-logo.png",
+      "sizes": "1600x1600",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

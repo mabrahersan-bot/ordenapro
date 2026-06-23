@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#d50047" />
+    <title>Dindu Administrador</title>
+    <link rel="manifest" href="../../manifest-admin.webmanifest" />
+    <link rel="apple-touch-icon" href="../../assets/dindu-logo.png" />
+    <link rel="stylesheet" href="../../styles.css" />
+    <link rel="stylesheet" href="../app.css" />
+  </head>
+  <body>
+    <main class="app-main">
+      <header class="app-header">
+        <div>
+          <div class="app-brand-line"><img src="../../assets/dindu-logo.png" alt="Dindu" /><span>Dindu</span></div>
+          <p class="eyebrow">Dindu administrador</p>
+          <h1>Control global de operaciones</h1>
+          <div class="status-chip" id="backendStatus">Modo demo</div>
+          <div class="status-chip live-chip">En vivo cada 4s</div>
+        </div>
+      </header>
+
+      <section class="pwa-actions role-app-note" aria-label="Instalacion y avisos">
+        <span>Para instalar en iPhone: Safari > Compartir > Agregar a pantalla de inicio.</span>
+        <button class="secondary-button" data-enable-notifications type="button">Activar avisos</button>
+        <span data-pwa-status>Preparando instalacion...</span>
+      </section>
+
+      <section class="panel auth-panel">
+        <div>
+          <p class="eyebrow">Acceso administrador</p>
+          <h2 id="adminSession">Verifica tu telefono</h2>
+        </div>
+        <div class="auth-grid">
+          <input id="authName" type="text" placeholder="Nombre" value="Administrador" />
+          <input id="authPhone" type="tel" placeholder="Telefono" value="5550001111" />
+          <button class="primary-button" id="sendCode" type="button">Enviar codigo</button>
+          <input id="authCode" type="text" placeholder="Codigo" />
+          <button class="secondary-button" id="verifyCode" type="button">Verificar</button>
+          <span id="authHint">Codigo demo visible aqui.</span>
+        </div>
+      </section>
+
+      <section class="admin-kpis">
+        <article><span>Ventas totales</span><strong id="adminRevenue">$0</strong></article>
+        <article><span>Pedidos</span><strong id="adminOrders">0</strong></article>
+        <article><span>Ticket promedio</span><strong id="adminAverage">$0</strong></article>
+        <article><span>Pendientes</span><strong id="adminPending">0</strong></article>
+        <article><span>Comision plataforma</span><strong id="adminPlatform">$0</strong></article>
+      </section>
+
+      <section class="control-grid three">
+        <article class="panel wide">
+          <h3>Pedidos e incidencias</h3>
+          <div id="adminOrdersList" class="order-list"></div>
+        </article>
+
+        <article class="panel">
+          <h3>Control rapido</h3>
+          <div class="admin-control">
+            <button class="secondary-button" id="resetDemo" type="button">Reiniciar demo</button>
+            <button class="secondary-button" id="toggleService" type="button">Pausar servicio</button>
+            <button class="secondary-button" id="toggleBusinessBlock" type="button">Bloquear negocio</button>
+            <button class="secondary-button" id="forceReady" type="button">Marcar pendientes como listos</button>
+            <button class="secondary-button" id="assignCourier" type="button">Asignar repartidor demo</button>
+            <label>Envio base<input id="baseDeliveryFee" type="number" min="0" /></label>
+            <label>Costo por km<input id="perKmFee" type="number" min="0" /></label>
+            <label>Comision plataforma %<input id="platformRate" type="number" min="0" max="50" /></label>
+            <button class="secondary-button" id="saveSettings" type="button">Guardar tarifas</button>
+            <textarea id="adminNote" placeholder="Nota interna o incidencia"></textarea>
+            <button class="primary-button" id="saveNote" type="button">Guardar nota</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h3>Menu y notas</h3>
+          <div id="adminMenu" class="compact-list"></div>
+          <div id="adminNotes" class="timeline"></div>
+        </article>
+      </section>
+    </main>
+
+    <script src="../config.js"></script>
+    <script src="../shared.js"></script>
+    <script src="../pwa.js?v=2"></script>
+    <script src="./admin.js"></script>
+  </body>
+</html>

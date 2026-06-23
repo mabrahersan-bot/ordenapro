@@ -1,0 +1,37 @@
+{
+  "name": "Dindu",
+  "short_name": "Dindu",
+  "description": "Pedidos, ventas y reparto local para comunidades.",
+  "start_url": "./apps/index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff4f8",
+  "theme_color": "#d50047",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./assets/dindu-logo.png",
+      "sizes": "1600x1600",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Comprador",
+      "url": "./apps/buyer/index.html"
+    },
+    {
+      "name": "Negocio",
+      "url": "./apps/merchant/index.html"
+    },
+    {
+      "name": "Repartidor",
+      "url": "./apps/courier/index.html"
+    },
+    {
+      "name": "Admin",
+      "url": "./apps/admin/index.html"
+    }
+  ]
+}
