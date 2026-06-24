@@ -1,5 +1,10 @@
 const OP = (() => {
-  const configApiBase = window.ORDENAPRO_CONFIG?.apiBase || localStorage.getItem("ordenapro-api-base") || "";
+  const configApiBase =
+    window.DINDU_CONFIG?.apiBase ||
+    window.ORDENAPRO_CONFIG?.apiBase ||
+    localStorage.getItem("dindu-api-base") ||
+    localStorage.getItem("ordenapro-api-base") ||
+    "";
   const apiBase = configApiBase || (location.protocol === "file:" ? "http://127.0.0.1:8780" : location.origin);
   const coverageKm = 10;
   const money = new Intl.NumberFormat("es-MX", {
@@ -144,7 +149,7 @@ const OP = (() => {
   };
 
   function load() {
-    const saved = localStorage.getItem("ordenapro-demo");
+    const saved = localStorage.getItem("dindu-demo");
     const state = saved ? JSON.parse(saved) : structuredClone(defaultState);
     state.business = {
       ...defaultState.business,
@@ -161,7 +166,8 @@ const OP = (() => {
         ? state.customer.savedAddresses
         : structuredClone(defaultState.customer.savedAddresses),
     };
-    state.menu = (state.menu || []).map((item) => ({
+    const menuSource = Array.isArray(state.menu) && state.menu.length ? state.menu : structuredClone(defaultState.menu);
+    state.menu = menuSource.map((item) => ({
       photo: "",
       available: true,
       extras: [],
@@ -192,7 +198,7 @@ const OP = (() => {
   }
 
   function save(state) {
-    localStorage.setItem("ordenapro-demo", JSON.stringify(state));
+    localStorage.setItem("dindu-demo", JSON.stringify(state));
   }
 
   async function api(path, options = {}) {
@@ -243,7 +249,7 @@ const OP = (() => {
   }
 
   function sessionKey(role) {
-    return `ordenapro-session-${role}`;
+    return `dindu-session-${role}`;
   }
 
   function getSession(role) {
