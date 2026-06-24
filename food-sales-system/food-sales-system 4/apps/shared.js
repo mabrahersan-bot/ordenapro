@@ -166,7 +166,8 @@ const OP = (() => {
         ? state.customer.savedAddresses
         : structuredClone(defaultState.customer.savedAddresses),
     };
-    state.menu = (state.menu || []).map((item) => ({
+    const menuSource = Array.isArray(state.menu) && state.menu.length ? state.menu : structuredClone(defaultState.menu);
+    state.menu = menuSource.map((item) => ({
       photo: "",
       available: true,
       extras: [],
