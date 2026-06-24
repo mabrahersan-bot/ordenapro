@@ -1,4 +1,4 @@
-const CACHE_NAME = "dindu-v21";
+const CACHE_NAME = "dindu-v22";
 const APP_SHELL = [
   "./",
   "./instalar.html",
