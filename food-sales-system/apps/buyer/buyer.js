@@ -472,6 +472,7 @@ function rateOrder(orderId) {
 
 window.addToCart = addToCart;
 window.cancelOrder = cancelOrder;
+window.placeOrder = placeOrder;
 window.rateOrder = rateOrder;
 
 async function renderAll() {
