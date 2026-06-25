@@ -489,17 +489,17 @@ const OP = (() => {
     return parsed ? `${parsed.lat.toFixed(5)}, ${parsed.lng.toFixed(5)}` : "Sin coordenadas";
   }
 
-  function osmEmbedUrl(point, zoom = 15) {
+  function googlePointEmbedUrl(point, zoom = 16) {
     const parsed = coords(point?.lat, point?.lng);
     if (!parsed) return "";
-    const delta = zoom >= 15 ? 0.012 : 0.04;
-    const bbox = [
-      parsed.lng - delta,
-      parsed.lat - delta,
-      parsed.lng + delta,
-      parsed.lat + delta,
-    ].join("%2C");
-    return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${parsed.lat}%2C${parsed.lng}`;
+    return `https://maps.google.com/maps?q=${parsed.lat},${parsed.lng}&z=${zoom}&output=embed`;
+  }
+
+  function googleRouteEmbedUrl(from, to) {
+    const start = coords(from?.lat, from?.lng);
+    const end = coords(to?.lat, to?.lng);
+    if (!start || !end) return "";
+    return `https://maps.google.com/maps?saddr=${start.lat},${start.lng}&daddr=${end.lat},${end.lng}&output=embed`;
   }
 
   function directionsUrl(from, to) {
@@ -515,8 +515,23 @@ const OP = (() => {
     if (!holder || !parsed) return false;
     holder.classList.add("real-map-active");
     holder.innerHTML = `
-      <iframe title="${escapeHtml(label)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${osmEmbedUrl(parsed)}"></iframe>
+      <iframe title="${escapeHtml(label)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${googlePointEmbedUrl(parsed)}"></iframe>
       <span class="real-map-chip">${escapeHtml(label)} · ${escapeHtml(formatCoords(parsed))}</span>
+    `;
+    return true;
+  }
+
+  function renderRouteMap(containerId, from, to, label = "Ruta en Google Maps") {
+    const holder = document.getElementById(containerId);
+    const start = coords(from?.lat, from?.lng);
+    const end = coords(to?.lat, to?.lng);
+    const url = googleRouteEmbedUrl(start, end);
+    if (!holder || !url) return false;
+    const distance = distanceKm(start, end);
+    holder.classList.add("real-map-active");
+    holder.innerHTML = `
+      <iframe title="${escapeHtml(label)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${url}"></iframe>
+      <span class="real-map-chip">${escapeHtml(label)}${distance ? ` · ${distance.toFixed(1)} km aprox.` : ""}</span>
     `;
     return true;
   }
@@ -599,6 +614,7 @@ const OP = (() => {
     formatCoords,
     directionsUrl,
     renderRealMap,
+    renderRouteMap,
     orderPickupCoords,
     orderDeliveryCoords,
     orderCourierCoords,
