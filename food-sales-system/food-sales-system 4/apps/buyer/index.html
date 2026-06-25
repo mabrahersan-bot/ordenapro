@@ -64,7 +64,7 @@
               <input id="loginCode" type="text" placeholder="6 digitos" />
             </label>
             <button class="secondary-button" id="verifyButton" type="button">Verificar e iniciar</button>
-            <div class="auth-hint" id="loginHint">En demo, el codigo aparecera aqui.</div>
+            <div class="auth-hint" id="loginHint">Codigo de prueba o SMS aparecera aqui.</div>
           </div>
         </article>
 
@@ -93,6 +93,8 @@
               Referencias
               <input id="addressReference" type="text" placeholder="Color de casa, entre calles, indicaciones" />
             </label>
+            <button class="secondary-button" id="useBuyerGps" type="button">Usar mi ubicacion GPS</button>
+            <div class="form-hint location-status" id="buyerLocationStatus">Sin ubicacion GPS de entrega.</div>
             <button class="secondary-button" id="saveAddress" type="button">Guardar direccion</button>
           </div>
         </article>
@@ -165,7 +167,7 @@
           <div class="status-chip" id="trackingStatus">Sin pedido activo</div>
         </div>
         <div class="tracking-layout">
-          <div class="local-map" aria-label="Mapa de seguimiento del comprador">
+          <div class="local-map" id="buyerMap" aria-label="Mapa de seguimiento del comprador">
             <div class="coverage-ring"></div>
             <div class="map-road road-a"></div>
             <div class="map-road road-b"></div>
@@ -186,6 +188,6 @@
     <script src="../config.js"></script>
     <script src="../shared.js"></script>
     <script src="../pwa.js?v=2"></script>
-    <script src="./buyer.js?v=20"></script>
+    <script src="./buyer.js?v=25"></script>
   </body>
 </html>
