@@ -208,10 +208,13 @@ function renderCoverage() {
   const isLoggedIn = !state.backendConnected || OP.hasSession("buyer");
   const hasAddress = addressReady();
   const hasCart = cartEntries().length > 0;
-  const isCovered = distance <= OP.coverageKm && OP.canReceiveOrders(state) && isLoggedIn && hasAddress && hasCart;
+  const canConfirm = OP.canReceiveOrders(state) && isLoggedIn && hasAddress && hasCart;
+  const extraKm = Math.max(Math.ceil(distance - OP.coverageKm), 0);
   document.getElementById("distanceLabel").textContent = `${distance.toFixed(1)} km${usesRealDistance ? " GPS" : " manual"}`;
-  document.getElementById("coverageLabel").textContent = isCovered
-    ? "Todo listo para confirmar."
+  document.getElementById("coverageLabel").textContent = canConfirm
+    ? extraKm
+      ? `Fuera del radio cercano de 10 km. Se suman ${extraKm} km extra al envio.`
+      : "Dentro del radio cercano de 10 km. Envio base $15."
     : !isLoggedIn
       ? "Verifica tu telefono antes de pedir."
       : !hasCart
@@ -222,9 +225,9 @@ function renderCoverage() {
       ? "Negocio pausado por administracion."
       : !state.business.open || !state.settings.serviceActive
         ? "Servicio temporalmente cerrado."
-        : "Fuera de cobertura. Maximo 10 km.";
-  document.getElementById("coverageBox").classList.toggle("outside", !isCovered);
-  document.getElementById("placeOrder").disabled = !isCovered;
+        : "No se puede confirmar por ahora.";
+  document.getElementById("coverageBox").classList.toggle("outside", !canConfirm);
+  document.getElementById("placeOrder").disabled = !canConfirm;
   document.getElementById("pickupPreview").textContent = state.business.pickupAddress;
   const costs = currentCosts();
   document.getElementById("cashDueTop").textContent = OP.money.format(costs.grandTotal);
@@ -461,11 +464,6 @@ async function placeOrder() {
     showBuyerNotice("Confirma tu direccion de entrega antes de pedir.");
     return;
   }
-  if (distanceKm > OP.coverageKm) {
-    showBuyerNotice("La direccion queda fuera del radio de 10 km.");
-    return;
-  }
-
   const now = new Date();
   const costs = currentCosts();
   const order = {
