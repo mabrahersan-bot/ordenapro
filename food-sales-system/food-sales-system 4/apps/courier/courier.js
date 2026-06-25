@@ -226,7 +226,10 @@ function renderSummary() {
   const courierPoint = OP.orderCourierCoords(assigned);
   const pickupPoint = OP.orderPickupCoords(assigned);
   const deliveryPoint = OP.orderDeliveryCoords(assigned);
-  if (!OP.renderRealMap("courierMap", courierPoint || pickupPoint || deliveryPoint, courierPoint ? "Tu GPS en vivo" : "Ruta de entrega")) {
+  if (
+    !OP.renderRouteMap("courierMap", courierPoint || pickupPoint, deliveryPoint, courierPoint ? "Ruta hacia el cliente" : "Ruta de recoleccion") &&
+    !OP.renderRealMap("courierMap", courierPoint || pickupPoint || deliveryPoint, courierPoint ? "Tu GPS en vivo" : "Ruta de entrega")
+  ) {
     OP.renderPins(assigned, "courier");
   }
   renderGpsStatus(assigned);
