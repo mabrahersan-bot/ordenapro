@@ -39,7 +39,7 @@
           <button class="primary-button" id="sendCode" type="button">Enviar codigo</button>
           <input id="authCode" type="text" placeholder="Codigo" />
           <button class="secondary-button" id="verifyCode" type="button">Verificar</button>
-          <span id="authHint">Codigo demo visible aqui.</span>
+          <span id="authHint">Codigo de prueba o SMS visible aqui.</span>
         </div>
       </section>
 
@@ -63,6 +63,8 @@
             <label>Nombre del negocio<input id="businessName" type="text" required /></label>
             <label>Direccion de recoleccion<input id="pickupAddress" type="text" required /></label>
             <label>Telefono<input id="businessPhone" type="text" required /></label>
+            <button class="secondary-button" id="useBusinessGps" type="button">Usar GPS del negocio</button>
+            <div class="form-hint location-status" id="businessLocationStatus">Sin ubicacion GPS del negocio.</div>
             <label class="inline-check"><input id="businessOpen" type="checkbox" />Abierto para recibir pedidos</label>
             <button class="secondary-button" type="submit">Guardar datos</button>
           </form>
@@ -93,6 +95,6 @@
     <script src="../config.js"></script>
     <script src="../shared.js"></script>
     <script src="../pwa.js?v=2"></script>
-    <script src="./merchant.js"></script>
+    <script src="./merchant.js?v=25"></script>
   </body>
 </html>
