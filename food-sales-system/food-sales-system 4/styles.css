@@ -304,6 +304,13 @@ main {
   border: 1px solid var(--line);
 }
 
+.section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .cart-pill strong {
   color: var(--green-dark);
 }
@@ -1516,6 +1523,16 @@ main {
 
   .cart-pill {
     justify-content: space-between;
+    width: 100%;
+  }
+
+  .section-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .section-actions .status-chip {
+    justify-content: center;
     width: 100%;
   }
 
