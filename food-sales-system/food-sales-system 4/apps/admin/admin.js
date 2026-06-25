@@ -131,7 +131,9 @@ async function sendAuthCode() {
     document.getElementById("authPhone").value,
     document.getElementById("authName").value,
   );
-  document.getElementById("authHint").textContent = `Codigo demo: ${payload.demo_code}`;
+  document.getElementById("authHint").textContent = payload.demo_code
+    ? `Codigo de prueba: ${payload.demo_code}`
+    : "Codigo enviado por SMS.";
 }
 
 async function verifyAuthCode() {
