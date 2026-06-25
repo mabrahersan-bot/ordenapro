@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import math
 import os
 import random
 import secrets
@@ -43,6 +44,16 @@ def init_db():
             "UPDATE businesses SET pickup_lat = COALESCE(pickup_lat, ?), pickup_lng = COALESCE(pickup_lng, ?) WHERE id = 1",
             (19.43261, -99.13321),
         )
+        db.execute(
+            """
+            UPDATE platform_settings
+            SET base_delivery_fee_cents = 1500,
+                per_km_fee_cents = 1000,
+                courier_base_commission_cents = 1500,
+                courier_per_km_commission_cents = 1000
+            WHERE id = 1
+            """
+        )
 
 
 def ensure_columns(db, table, columns):
@@ -65,11 +76,13 @@ def cents(value):
 
 
 def calculate_costs(subtotal_cents, distance_km, settings):
-    delivery_fee = round(cents(settings["base_delivery_fee_cents"]) + distance_km * cents(settings["per_km_fee_cents"]))
+    coverage_km = 10
+    extra_km = max(0, math.ceil(float(distance_km) - coverage_km))
+    delivery_fee = round(cents(settings["base_delivery_fee_cents"]) + extra_km * cents(settings["per_km_fee_cents"]))
     platform_fee = round(subtotal_cents * float(settings["platform_rate"]))
     courier_commission = round(
         cents(settings["courier_base_commission_cents"])
-        + distance_km * cents(settings["courier_per_km_commission_cents"])
+        + extra_km * cents(settings["courier_per_km_commission_cents"])
     )
     return {
         "subtotal_cents": subtotal_cents,
@@ -516,8 +529,6 @@ class Api(BaseHTTPRequestHandler):
             business = db.execute("SELECT * FROM businesses WHERE id = ?", (data.get("business_id", 1),)).fetchone()
             if not business or not business["is_open"] or business["is_blocked"]:
                 return self.send_json({"error": "El negocio no puede recibir pedidos"}, 409)
-            if distance_km > float(business["coverage_km"]):
-                return self.send_json({"error": "Direccion fuera de cobertura"}, 409)
             costs = calculate_costs(subtotal, distance_km, settings)
             cur = db.execute(
                 """
