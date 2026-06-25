@@ -33,11 +33,11 @@ const OP = (() => {
       blocked: false,
     },
     settings: {
-      baseDeliveryFee: 18,
-      perKmFee: 6,
+      baseDeliveryFee: 15,
+      perKmFee: 10,
       platformRate: 0.08,
-      courierBaseCommission: 18,
-      courierPerKmCommission: 4,
+      courierBaseCommission: 15,
+      courierPerKmCommission: 10,
       serviceActive: true,
     },
     customer: {
@@ -565,9 +565,10 @@ const OP = (() => {
   }
 
   function calculateCosts(subtotal, distanceKm, settings) {
-    const deliveryFee = Math.round(settings.baseDeliveryFee + distanceKm * settings.perKmFee);
+    const extraKm = Math.max(Math.ceil((Number(distanceKm) || 0) - coverageKm), 0);
+    const deliveryFee = Math.round(settings.baseDeliveryFee + extraKm * settings.perKmFee);
     const platformFee = Math.round(subtotal * settings.platformRate);
-    const courierCommission = Math.round(settings.courierBaseCommission + distanceKm * settings.courierPerKmCommission);
+    const courierCommission = Math.round(settings.courierBaseCommission + extraKm * settings.courierPerKmCommission);
     return {
       subtotal,
       deliveryFee,
