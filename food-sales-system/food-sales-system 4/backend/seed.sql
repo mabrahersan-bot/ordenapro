@@ -7,8 +7,8 @@ INSERT INTO users (id, role, name, phone, email, status) VALUES
   (4, 'admin', 'Administrador', '5550001111', 'admin@example.local', 'active')
 ON CONFLICT(id) DO NOTHING;
 
-INSERT INTO businesses (id, owner_user_id, name, pickup_address, phone, coverage_km, is_open, is_blocked) VALUES
-  (1, 2, 'Cocina Central', 'Portal Hidalgo 12, Centro', '5550102026', 10, 1, 0)
+INSERT INTO businesses (id, owner_user_id, name, pickup_address, pickup_lat, pickup_lng, phone, coverage_km, is_open, is_blocked) VALUES
+  (1, 2, 'Cocina Central', 'Portal Hidalgo 12, Centro', 19.43261, -99.13321, '5550102026', 10, 1, 0)
 ON CONFLICT(id) DO NOTHING;
 
 INSERT INTO buyer_addresses (id, buyer_user_id, label, address, reference, is_default) VALUES
