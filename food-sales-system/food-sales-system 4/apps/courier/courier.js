@@ -47,7 +47,11 @@ function stepLabel(order) {
 
 function routeText(order) {
   if (!order) return "Toma una entrega para ver la ruta.";
-  return `Recoge en ${order.pickupAddress}. Entrega en ${order.deliveryAddress}. Distancia ${order.distanceKm} km.`;
+  const courierPoint = OP.orderCourierCoords(order);
+  const deliveryPoint = OP.orderDeliveryCoords(order);
+  const realRemaining = OP.distanceKm(courierPoint, deliveryPoint);
+  const distanceText = realRemaining ? `${realRemaining.toFixed(1)} km reales restantes` : `${order.distanceKm} km estimados`;
+  return `Recoge en ${order.pickupAddress}. Entrega en ${order.deliveryAddress}. Distancia ${distanceText}.`;
 }
 
 function moneyBreakdown(order) {
@@ -219,7 +223,12 @@ function renderSummary() {
     <span><strong>${active ? OP.money.format(active.courierCommission) : "$0"}</strong> comision activa</span>
   `;
   document.getElementById("routeMini").textContent = routeText(active);
-  OP.renderPins(assigned, "courier");
+  const courierPoint = OP.orderCourierCoords(assigned);
+  const pickupPoint = OP.orderPickupCoords(assigned);
+  const deliveryPoint = OP.orderDeliveryCoords(assigned);
+  if (!OP.renderRealMap("courierMap", courierPoint || pickupPoint || deliveryPoint, courierPoint ? "Tu GPS en vivo" : "Ruta de entrega")) {
+    OP.renderPins(assigned, "courier");
+  }
   renderGpsStatus(assigned);
 }
 
@@ -229,7 +238,11 @@ function renderGpsStatus(order) {
     holder.textContent = gpsWatchId ? "Esperando primera ubicacion GPS..." : "GPS real apagado.";
     return;
   }
-  holder.textContent = `Ultima ubicacion: ${Number(order.courierLat).toFixed(5)}, ${Number(order.courierLng).toFixed(5)} · precision ${Math.round(order.courierAccuracy || 0)} m`;
+  const route = OP.directionsUrl(OP.orderCourierCoords(order), OP.orderDeliveryCoords(order));
+  holder.innerHTML = `
+    Ultima ubicacion: ${Number(order.courierLat).toFixed(5)}, ${Number(order.courierLng).toFixed(5)} · precision ${Math.round(order.courierAccuracy || 0)} m
+    ${route ? `<a class="map-link" target="_blank" rel="noopener" href="${route}">Abrir ruta al cliente</a>` : ""}
+  `;
 }
 
 function notifyCourierChanges() {
@@ -253,7 +266,9 @@ async function sendAuthCode() {
     document.getElementById("authPhone").value,
     document.getElementById("authName").value,
   );
-  document.getElementById("authHint").textContent = `Codigo demo: ${payload.demo_code}`;
+  document.getElementById("authHint").textContent = payload.demo_code
+    ? `Codigo de prueba: ${payload.demo_code}`
+    : "Codigo enviado por SMS.";
 }
 
 async function verifyAuthCode() {
