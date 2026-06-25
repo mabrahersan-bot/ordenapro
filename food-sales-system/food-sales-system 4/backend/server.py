@@ -7,6 +7,7 @@ import sqlite3
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("ORDENAPRO_DB", ROOT / "dindu.db"))
@@ -24,12 +25,24 @@ def init_db():
     with connect() as db:
         db.executescript((ROOT / "schema.sql").read_text())
         ensure_columns(db, "orders", {
+            "pickup_lat": "REAL",
+            "pickup_lng": "REAL",
+            "delivery_lat": "REAL",
+            "delivery_lng": "REAL",
             "courier_lat": "REAL",
             "courier_lng": "REAL",
             "courier_accuracy": "REAL",
             "courier_location_at": "TEXT",
         })
+        ensure_columns(db, "businesses", {
+            "pickup_lat": "REAL",
+            "pickup_lng": "REAL",
+        })
         db.executescript((ROOT / "seed.sql").read_text())
+        db.execute(
+            "UPDATE businesses SET pickup_lat = COALESCE(pickup_lat, ?), pickup_lng = COALESCE(pickup_lng, ?) WHERE id = 1",
+            (19.43261, -99.13321),
+        )
 
 
 def ensure_columns(db, table, columns):
@@ -65,6 +78,22 @@ def calculate_costs(subtotal_cents, distance_km, settings):
         "courier_commission_cents": courier_commission,
         "total_cents": subtotal_cents + delivery_fee,
     }
+
+
+def send_login_code(phone, code, role, name):
+    webhook = os.environ.get("DINDU_SMS_WEBHOOK_URL", "").strip()
+    if not webhook:
+        return False
+    payload = json.dumps({
+        "phone": phone,
+        "code": code,
+        "role": role,
+        "name": name,
+        "message": f"Tu codigo Dindu es {code}. Expira en 10 minutos.",
+    }, ensure_ascii=False).encode("utf-8")
+    request = Request(webhook, data=payload, headers={"Content-Type": "application/json"}, method="POST")
+    with urlopen(request, timeout=8) as response:
+        return 200 <= response.status < 300
 
 
 class Api(BaseHTTPRequestHandler):
@@ -233,11 +262,16 @@ class Api(BaseHTTPRequestHandler):
                 """,
                 (role, phone, code, name),
             )
+        code_sent = False
+        try:
+            code_sent = send_login_code(phone, code, role, name)
+        except Exception:
+            code_sent = False
         return self.send_json({
             "ok": True,
             "phone": phone,
-            "demo_code": code,
-            "message": "Codigo demo generado. En produccion se enviaria por SMS.",
+            **({} if code_sent else {"demo_code": code}),
+            "message": "Codigo enviado por SMS." if code_sent else "Codigo de prueba generado. Configura DINDU_SMS_WEBHOOK_URL para envio real.",
         })
 
     def verify_login_code(self):
@@ -351,6 +385,10 @@ class Api(BaseHTTPRequestHandler):
                         "address": order["delivery_address"],
                         "deliveryAddress": order["delivery_address"],
                         "pickupAddress": order["pickup_address"],
+                        "pickupLat": order["pickup_lat"],
+                        "pickupLng": order["pickup_lng"],
+                        "deliveryLat": order["delivery_lat"],
+                        "deliveryLng": order["delivery_lng"],
                         "items": items,
                         "total": order["subtotal_cents"] / 100,
                         "subtotal": order["subtotal_cents"] / 100,
@@ -380,6 +418,8 @@ class Api(BaseHTTPRequestHandler):
                         "business": {
                             "name": business["name"],
                             "pickupAddress": business["pickup_address"],
+                            "pickupLat": business["pickup_lat"],
+                            "pickupLng": business["pickup_lng"],
                             "phone": business["phone"],
                             "open": bool(business["is_open"]),
                             "blocked": bool(business["is_blocked"]),
@@ -483,10 +523,11 @@ class Api(BaseHTTPRequestHandler):
                 """
                 INSERT INTO orders (
                   buyer_user_id, business_id, pickup_address, delivery_address, delivery_reference,
+                  pickup_lat, pickup_lng, delivery_lat, delivery_lng,
                   distance_km, payment_method, subtotal_cents, delivery_fee_cents, platform_fee_cents,
                   courier_commission_cents, total_cents, customer_note
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     data["buyer_user_id"],
@@ -494,6 +535,10 @@ class Api(BaseHTTPRequestHandler):
                     business["pickup_address"],
                     data["delivery_address"],
                     data.get("delivery_reference", ""),
+                    data.get("pickup_lat", business["pickup_lat"]),
+                    data.get("pickup_lng", business["pickup_lng"]),
+                    data.get("delivery_lat"),
+                    data.get("delivery_lng"),
                     distance_km,
                     data.get("payment_method", "cash"),
                     costs["subtotal_cents"],
@@ -553,6 +598,10 @@ class Api(BaseHTTPRequestHandler):
             "business_id": 1,
             "delivery_address": data["delivery_address"],
             "delivery_reference": data.get("delivery_reference", ""),
+            "pickup_lat": data.get("pickup_lat"),
+            "pickup_lng": data.get("pickup_lng"),
+            "delivery_lat": data.get("delivery_lat"),
+            "delivery_lng": data.get("delivery_lng"),
             "distance_km": data.get("distance_km", 1),
             "payment_method": "cash",
             "customer_note": data.get("customer_note", ""),
@@ -693,12 +742,15 @@ class Api(BaseHTTPRequestHandler):
                 """
                 UPDATE businesses
                 SET name = COALESCE(?, name), pickup_address = COALESCE(?, pickup_address),
+                    pickup_lat = COALESCE(?, pickup_lat), pickup_lng = COALESCE(?, pickup_lng),
                     phone = COALESCE(?, phone), is_open = COALESCE(?, is_open), is_blocked = COALESCE(?, is_blocked)
                 WHERE id = 1
                 """,
                 (
                     data.get("name"),
                     data.get("pickup_address"),
+                    data.get("pickup_lat"),
+                    data.get("pickup_lng"),
                     data.get("phone"),
                     data.get("is_open"),
                     data.get("is_blocked"),
