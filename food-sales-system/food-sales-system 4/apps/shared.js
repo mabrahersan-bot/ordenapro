@@ -26,6 +26,8 @@ const OP = (() => {
     business: {
       name: "Cocina Central",
       pickupAddress: "Portal Hidalgo 12, Centro",
+      pickupLat: 19.43261,
+      pickupLng: -99.13321,
       phone: "555 010 2026",
       open: true,
       blocked: false,
@@ -49,6 +51,8 @@ const OP = (() => {
           label: "Casa",
           address: "Av. Central 120, Col. Centro",
           reference: "Porton negro, tocar dos veces",
+          lat: 19.42702,
+          lng: -99.16766,
         },
       ],
     },
@@ -178,7 +182,11 @@ const OP = (() => {
       gpsProgress: order.status === "delivered" ? 100 : 0,
       courier: "",
       pickupAddress: state.business.pickupAddress,
+      pickupLat: state.business.pickupLat,
+      pickupLng: state.business.pickupLng,
       deliveryAddress: order.address || "Sin direccion",
+      deliveryLat: order.deliveryLat || order.delivery_lat || null,
+      deliveryLng: order.deliveryLng || order.delivery_lng || null,
       subtotal: order.total || 0,
       deliveryFee: 0,
       platformFee: 0,
@@ -344,6 +352,8 @@ const OP = (() => {
       body: JSON.stringify({
         name: business.name,
         pickup_address: business.pickupAddress,
+        pickup_lat: business.pickupLat,
+        pickup_lng: business.pickupLng,
         phone: business.phone,
         is_open: business.open ? 1 : 0,
         is_blocked: business.blocked ? 1 : 0,
@@ -439,6 +449,78 @@ const OP = (() => {
     };
   }
 
+  function coords(lat, lng) {
+    const parsedLat = Number(lat);
+    const parsedLng = Number(lng);
+    if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLng)) return null;
+    return { lat: parsedLat, lng: parsedLng };
+  }
+
+  function orderPickupCoords(order) {
+    return coords(order?.pickupLat ?? order?.pickup_lat, order?.pickupLng ?? order?.pickup_lng);
+  }
+
+  function orderDeliveryCoords(order) {
+    return coords(order?.deliveryLat ?? order?.delivery_lat, order?.deliveryLng ?? order?.delivery_lng);
+  }
+
+  function orderCourierCoords(order) {
+    return coords(order?.courierLat ?? order?.courier_lat, order?.courierLng ?? order?.courier_lng);
+  }
+
+  function distanceKm(from, to) {
+    const start = coords(from?.lat, from?.lng);
+    const end = coords(to?.lat, to?.lng);
+    if (!start || !end) return null;
+    const radiusKm = 6371;
+    const toRad = (value) => (value * Math.PI) / 180;
+    const dLat = toRad(end.lat - start.lat);
+    const dLng = toRad(end.lng - start.lng);
+    const lat1 = toRad(start.lat);
+    const lat2 = toRad(end.lat);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return radiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function formatCoords(point) {
+    const parsed = coords(point?.lat, point?.lng);
+    return parsed ? `${parsed.lat.toFixed(5)}, ${parsed.lng.toFixed(5)}` : "Sin coordenadas";
+  }
+
+  function osmEmbedUrl(point, zoom = 15) {
+    const parsed = coords(point?.lat, point?.lng);
+    if (!parsed) return "";
+    const delta = zoom >= 15 ? 0.012 : 0.04;
+    const bbox = [
+      parsed.lng - delta,
+      parsed.lat - delta,
+      parsed.lng + delta,
+      parsed.lat + delta,
+    ].join("%2C");
+    return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${parsed.lat}%2C${parsed.lng}`;
+  }
+
+  function directionsUrl(from, to) {
+    const start = coords(from?.lat, from?.lng);
+    const end = coords(to?.lat, to?.lng);
+    if (!start || !end) return "";
+    return `https://www.google.com/maps/dir/?api=1&origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&travelmode=driving`;
+  }
+
+  function renderRealMap(containerId, point, label = "Ubicacion real") {
+    const holder = document.getElementById(containerId);
+    const parsed = coords(point?.lat, point?.lng);
+    if (!holder || !parsed) return false;
+    holder.classList.add("real-map-active");
+    holder.innerHTML = `
+      <iframe title="${escapeHtml(label)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${osmEmbedUrl(parsed)}"></iframe>
+      <span class="real-map-chip">${escapeHtml(label)} · ${escapeHtml(formatCoords(parsed))}</span>
+    `;
+    return true;
+  }
+
   function setPin(id, x, y) {
     const pin = document.getElementById(id);
     if (!pin) return;
@@ -512,6 +594,14 @@ const OP = (() => {
     activeTrackedOrder,
     remainingKm,
     etaMinutes,
+    coords,
+    distanceKm,
+    formatCoords,
+    directionsUrl,
+    renderRealMap,
+    orderPickupCoords,
+    orderDeliveryCoords,
+    orderCourierCoords,
     gpsPosition,
     renderPins,
     parseExtras,
