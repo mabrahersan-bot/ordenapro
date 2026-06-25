@@ -31,5 +31,5 @@ INSERT INTO product_extras (id, product_id, name, price_cents) VALUES
 ON CONFLICT(id) DO NOTHING;
 
 INSERT INTO platform_settings (id, base_delivery_fee_cents, per_km_fee_cents, platform_rate, courier_base_commission_cents, courier_per_km_commission_cents, service_active)
-VALUES (1, 1800, 600, 0.08, 1800, 400, 1)
+VALUES (1, 1500, 1000, 0.08, 1500, 1000, 1)
 ON CONFLICT(id) DO NOTHING;
