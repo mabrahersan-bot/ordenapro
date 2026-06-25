@@ -251,7 +251,10 @@ function renderTracking() {
   const courierPoint = OP.orderCourierCoords(order);
   const deliveryPoint = OP.orderDeliveryCoords(order);
   const pickupPoint = OP.orderPickupCoords(order);
-  if (!OP.renderRealMap("buyerMap", courierPoint || deliveryPoint || pickupPoint, courierPoint ? "Repartidor en vivo" : "Ubicacion del pedido")) {
+  if (
+    !OP.renderRouteMap("buyerMap", courierPoint || pickupPoint, deliveryPoint, courierPoint ? "Ruta del repartidor" : "Ruta del pedido") &&
+    !OP.renderRealMap("buyerMap", courierPoint || deliveryPoint || pickupPoint, courierPoint ? "Repartidor en vivo" : "Ubicacion del pedido")
+  ) {
     OP.renderPins(order, "buyer");
   }
   const routeLink = OP.directionsUrl(courierPoint || pickupPoint, deliveryPoint);
