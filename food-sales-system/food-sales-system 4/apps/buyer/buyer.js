@@ -2,6 +2,7 @@ let state = OP.load();
 let refreshing = false;
 let lastBuyerOrderStatus = "";
 let buyerNoticeTimer = null;
+let pendingDeliveryCoords = null;
 
 function showBuyerNotice(message) {
   const warning = document.getElementById("checkoutWarning");
@@ -44,7 +45,7 @@ function currentCosts() {
       grandTotal: 0,
     };
   }
-  return OP.calculateCosts(subtotal, Number(document.getElementById("customerDistance").value), state.settings);
+  return OP.calculateCosts(subtotal, currentDistanceKm(), state.settings);
 }
 
 function addressReady() {
@@ -134,6 +135,29 @@ function selectedAddress() {
   );
 }
 
+function businessCoords() {
+  return OP.coords(state.business.pickupLat, state.business.pickupLng);
+}
+
+function deliveryCoords() {
+  const address = selectedAddress();
+  return OP.coords(address?.lat, address?.lng) || OP.coords(state.customer.deliveryLat, state.customer.deliveryLng);
+}
+
+function currentDistanceKm() {
+  const realDistance = OP.distanceKm(businessCoords(), deliveryCoords());
+  return realDistance || Number(document.getElementById("customerDistance").value);
+}
+
+function locationStatusText() {
+  const point = deliveryCoords();
+  if (!point) return "Sin ubicacion GPS de entrega. Puedes pedir con distancia manual.";
+  const distance = OP.distanceKm(businessCoords(), point);
+  return distance
+    ? `GPS entrega: ${OP.formatCoords(point)} · ${distance.toFixed(1)} km del negocio.`
+    : `GPS entrega: ${OP.formatCoords(point)}. Falta ubicacion GPS del negocio.`;
+}
+
 function buyerOrders() {
   const phone = state.customer.phone?.trim();
   if (!state.backendConnected) return state.orders;
@@ -163,6 +187,7 @@ function renderSession() {
   document.getElementById("customerAddress").value = address
     ? `${address.address}${address.reference ? ` · ${address.reference}` : ""}`
     : "";
+  document.getElementById("buyerLocationStatus").textContent = locationStatusText();
   document.getElementById("addressCount").textContent = `${customer.savedAddresses.length} guardada${
     customer.savedAddresses.length === 1 ? "" : "s"
   }`;
@@ -178,12 +203,13 @@ function renderSession() {
 }
 
 function renderCoverage() {
-  const distance = Number(document.getElementById("customerDistance").value);
+  const distance = currentDistanceKm();
+  const usesRealDistance = Boolean(OP.distanceKm(businessCoords(), deliveryCoords()));
   const isLoggedIn = !state.backendConnected || OP.hasSession("buyer");
   const hasAddress = addressReady();
   const hasCart = cartEntries().length > 0;
   const isCovered = distance <= OP.coverageKm && OP.canReceiveOrders(state) && isLoggedIn && hasAddress && hasCart;
-  document.getElementById("distanceLabel").textContent = `${distance.toFixed(1)} km`;
+  document.getElementById("distanceLabel").textContent = `${distance.toFixed(1)} km${usesRealDistance ? " GPS" : " manual"}`;
   document.getElementById("coverageLabel").textContent = isCovered
     ? "Todo listo para confirmar."
     : !isLoggedIn
@@ -222,7 +248,13 @@ function renderTracking() {
     `;
     return;
   }
-  OP.renderPins(order, "buyer");
+  const courierPoint = OP.orderCourierCoords(order);
+  const deliveryPoint = OP.orderDeliveryCoords(order);
+  const pickupPoint = OP.orderPickupCoords(order);
+  if (!OP.renderRealMap("buyerMap", courierPoint || deliveryPoint || pickupPoint, courierPoint ? "Repartidor en vivo" : "Ubicacion del pedido")) {
+    OP.renderPins(order, "buyer");
+  }
+  const routeLink = OP.directionsUrl(courierPoint || pickupPoint, deliveryPoint);
   document.getElementById("trackingStatus").textContent =
     order.status === "delivered" ? "Entregado" : `${OP.statusLabels[order.status]} · ${OP.etaMinutes(order)} min`;
   document.getElementById("trackingCopy").innerHTML = `
@@ -236,6 +268,7 @@ function renderTracking() {
         ? `<span>GPS real repartidor: ${Number(order.courierLat).toFixed(5)}, ${Number(order.courierLng).toFixed(5)} · precision ${Math.round(order.courierAccuracy || 0)} m</span>`
         : `<span>GPS real aun no activado por el repartidor.</span>`
     }
+    ${routeLink ? `<a class="map-link" target="_blank" rel="noopener" href="${routeLink}">Abrir ruta real en Google Maps</a>` : ""}
     <span>${order.courier ? `Repartidor: ${OP.escapeHtml(order.courier)}` : "Aun sin repartidor asignado."}</span>
   `;
 }
@@ -321,7 +354,9 @@ async function loginBuyer() {
   state.customer.phone = document.getElementById("loginPhone").value.trim();
   if (state.backendConnected) {
     const payload = await OP.requestLoginCode("buyer", state.customer.phone, state.customer.name);
-    document.getElementById("loginHint").textContent = `Codigo demo: ${payload.demo_code}`;
+    document.getElementById("loginHint").textContent = payload.demo_code
+      ? `Codigo de prueba: ${payload.demo_code}`
+      : "Codigo enviado por SMS.";
   } else {
     state.customer.loggedIn = true;
     document.getElementById("loginHint").textContent = "Sesion demo iniciada sin codigo.";
@@ -357,8 +392,13 @@ function saveAddress() {
     return;
   }
   const id = `addr-${Date.now()}`;
-  state.customer.savedAddresses.push({ id, label, address, reference });
+  const point = pendingDeliveryCoords || OP.coords(state.customer.deliveryLat, state.customer.deliveryLng);
+  state.customer.savedAddresses.push({ id, label, address, reference, lat: point?.lat || null, lng: point?.lng || null });
   state.customer.selectedAddressId = id;
+  if (point) {
+    state.customer.deliveryLat = point.lat;
+    state.customer.deliveryLng = point.lng;
+  }
   document.getElementById("addressLabel").value = "";
   document.getElementById("newAddress").value = "";
   document.getElementById("addressReference").value = "";
@@ -367,9 +407,44 @@ function saveAddress() {
   renderAll();
 }
 
+function useBuyerGps() {
+  if (!navigator.geolocation) {
+    showBuyerNotice("Este telefono no permite GPS en el navegador.");
+    return;
+  }
+  document.getElementById("buyerLocationStatus").textContent = "Solicitando permiso de ubicacion...";
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const point = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+      };
+      pendingDeliveryCoords = point;
+      state.customer.deliveryLat = point.lat;
+      state.customer.deliveryLng = point.lng;
+      const address = selectedAddress();
+      if (address) {
+        address.lat = point.lat;
+        address.lng = point.lng;
+      }
+      OP.save(state);
+      document.getElementById("buyerLocationStatus").textContent = `${locationStatusText()} · precision ${Math.round(point.accuracy)} m`;
+      showBuyerNotice("Ubicacion GPS de entrega guardada.");
+      renderAll();
+    },
+    (error) => {
+      document.getElementById("buyerLocationStatus").textContent = `GPS no disponible: ${error.message}`;
+    },
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 12000 },
+  );
+}
+
 async function placeOrder() {
   const entries = cartEntries();
-  const distanceKm = Number(document.getElementById("customerDistance").value);
+  const distanceKm = currentDistanceKm();
+  const pickupPoint = businessCoords();
+  const deliveryPoint = deliveryCoords();
   if (state.backendConnected && !OP.hasSession("buyer")) {
     document.getElementById("loginHint").textContent = "Verifica tu telefono para confirmar el pedido.";
     showBuyerNotice("Primero verifica tu telefono.");
@@ -397,6 +472,10 @@ async function placeOrder() {
     address: document.getElementById("customerAddress").value || "Sin direccion",
     deliveryAddress: document.getElementById("customerAddress").value || "Sin direccion",
     pickupAddress: state.business.pickupAddress,
+    pickupLat: pickupPoint?.lat || null,
+    pickupLng: pickupPoint?.lng || null,
+    deliveryLat: deliveryPoint?.lat || null,
+    deliveryLng: deliveryPoint?.lng || null,
     items: entries.map((item) => ({
       name: item.name,
       qty: item.qty,
@@ -433,6 +512,10 @@ async function placeOrder() {
       customer_phone: order.customerPhone,
       delivery_address: order.deliveryAddress,
       delivery_reference: selectedAddress()?.reference || "",
+      pickup_lat: order.pickupLat,
+      pickup_lng: order.pickupLng,
+      delivery_lat: order.deliveryLat,
+      delivery_lng: order.deliveryLng,
       distance_km: order.distanceKm,
       customer_note: order.customerNote,
       items: entries.map((item) => ({
@@ -509,5 +592,6 @@ document.getElementById("loginButton").addEventListener("click", loginBuyer);
 document.getElementById("verifyButton").addEventListener("click", verifyBuyer);
 document.getElementById("savedAddress").addEventListener("change", chooseAddress);
 document.getElementById("saveAddress").addEventListener("click", saveAddress);
+document.getElementById("useBuyerGps").addEventListener("click", useBuyerGps);
 renderAll();
 setInterval(autoRefresh, 4000);
