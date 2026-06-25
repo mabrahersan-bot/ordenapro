@@ -55,6 +55,7 @@ function addressReady() {
 
 function renderMenu() {
   const products = state.menu.filter((item) => item.available);
+  document.getElementById("availableCount").textContent = `${products.length} disponible${products.length === 1 ? "" : "s"}`;
   const holder = document.getElementById("menuGrid");
   holder.innerHTML = products.length
     ? products
@@ -101,7 +102,9 @@ function renderMenu() {
 function renderCart() {
   const entries = cartEntries();
   const count = entries.reduce((sum, item) => sum + item.qty, 0);
-  document.getElementById("cartCount").textContent = `${count} producto${count === 1 ? "" : "s"}`;
+  document.getElementById("cartCount").textContent = count
+    ? `${count} producto${count === 1 ? "" : "s"}`
+    : "vacio";
   document.getElementById("cartTotal").textContent = OP.money.format(cartTotal());
 
   const holder = document.getElementById("cartItems");
@@ -232,12 +235,12 @@ function renderCoverage() {
   const costs = currentCosts();
   document.getElementById("cashDueTop").textContent = OP.money.format(costs.grandTotal);
   document.getElementById("checkoutSummary").innerHTML = `
-    <div><span>Productos</span><strong>${OP.money.format(costs.subtotal)}</strong></div>
-    <div><span>Envio estimado</span><strong>${OP.money.format(costs.deliveryFee)}</strong></div>
+    <div><span>Productos elegidos</span><strong>${OP.money.format(costs.subtotal)}</strong></div>
+    <div><span>Envio al repartidor</span><strong>${OP.money.format(costs.deliveryFee)}</strong></div>
     <div class="summary-total"><span>Total en efectivo</span><strong>${OP.money.format(costs.grandTotal)}</strong></div>
   `;
   document.getElementById("cashCallout").textContent = costs.grandTotal
-    ? `Prepara ${OP.money.format(costs.grandTotal)} en efectivo para pagar al recibir.`
+    ? `Paga ${OP.money.format(costs.grandTotal)} al recibir: ${OP.money.format(costs.subtotal)} de productos + ${OP.money.format(costs.deliveryFee)} de envio.`
     : "Agrega productos para ver cuanto pagaras en efectivo.";
 }
 
