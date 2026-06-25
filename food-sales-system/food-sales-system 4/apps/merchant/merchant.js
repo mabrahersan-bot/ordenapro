@@ -105,6 +105,10 @@ function renderBusiness() {
   document.getElementById("pickupAddress").value = state.business.pickupAddress;
   document.getElementById("businessPhone").value = state.business.phone;
   document.getElementById("businessOpen").checked = state.business.open;
+  const point = OP.coords(state.business.pickupLat, state.business.pickupLng);
+  document.getElementById("businessLocationStatus").textContent = point
+    ? `GPS negocio: ${OP.formatCoords(point)}.`
+    : "Sin ubicacion GPS del negocio. Se usara distancia manual del comprador.";
   const openStatus = document.getElementById("merchantOpenStatus");
   openStatus.textContent = state.business.open && !state.business.blocked ? "Abierto" : "Cerrado";
   openStatus.classList.toggle("closed", !state.business.open || state.business.blocked);
@@ -131,7 +135,9 @@ async function sendAuthCode() {
     document.getElementById("authPhone").value,
     document.getElementById("authName").value,
   );
-  document.getElementById("authHint").textContent = `Codigo demo: ${payload.demo_code}`;
+  document.getElementById("authHint").textContent = payload.demo_code
+    ? `Codigo de prueba: ${payload.demo_code}`
+    : "Codigo enviado por SMS.";
 }
 
 async function verifyAuthCode() {
@@ -285,6 +291,8 @@ async function saveBusiness(event) {
   state.business = {
     name: businessName,
     pickupAddress,
+    pickupLat: state.business.pickupLat || null,
+    pickupLng: state.business.pickupLng || null,
     phone,
     open: document.getElementById("businessOpen").checked,
     blocked: state.business.blocked,
@@ -301,6 +309,29 @@ async function saveBusiness(event) {
   }
   showMerchantNotice(state.business.open ? "Negocio abierto y datos guardados." : "Negocio cerrado y datos guardados.");
   await renderAll();
+}
+
+function useBusinessGps() {
+  if (!navigator.geolocation) {
+    showMerchantNotice("Este navegador no permite GPS.");
+    return;
+  }
+  document.getElementById("businessLocationStatus").textContent = "Solicitando permiso de ubicacion...";
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      state.business.pickupLat = position.coords.latitude;
+      state.business.pickupLng = position.coords.longitude;
+      OP.save(state);
+      document.getElementById("businessLocationStatus").textContent =
+        `GPS negocio: ${OP.formatCoords({ lat: state.business.pickupLat, lng: state.business.pickupLng })} · precision ${Math.round(position.coords.accuracy)} m`;
+      showMerchantNotice("GPS del negocio guardado. Ahora guarda datos para publicarlo.");
+      renderBusiness();
+    },
+    (error) => {
+      document.getElementById("businessLocationStatus").textContent = `GPS no disponible: ${error.message}`;
+    },
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 12000 },
+  );
 }
 
 async function toggleProduct(productId) {
@@ -363,6 +394,7 @@ document.addEventListener("click", (event) => {
 });
 document.getElementById("productForm").addEventListener("submit", createProduct);
 document.getElementById("businessForm").addEventListener("submit", saveBusiness);
+document.getElementById("useBusinessGps").addEventListener("click", useBusinessGps);
 document.getElementById("productPhoto").addEventListener("change", previewProductPhoto);
 document.getElementById("sendCode").addEventListener("click", sendAuthCode);
 document.getElementById("verifyCode").addEventListener("click", verifyAuthCode);
